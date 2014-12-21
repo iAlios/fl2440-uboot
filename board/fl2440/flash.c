@@ -32,7 +32,6 @@
  *			source code.
  */
 
-
 #include <common.h>
 #include <mpc5xx.h>
 
@@ -62,60 +61,56 @@
 #define FLASH_CMD_PROTECT_CLEAR		0x00D0
 #define FLASH_STATUS_DONE		0x0080
 
-flash_info_t	flash_info[CONFIG_SYS_MAX_FLASH_BANKS];
+flash_info_t flash_info[CONFIG_SYS_MAX_FLASH_BANKS];
 
 /*
  * Local function prototypes
  */
-static ulong	flash_get_size		(vu_short *addr, flash_info_t *info);
-static int	write_short		(flash_info_t *info, ulong dest, ushort data);
-static void	flash_get_offsets	(ulong base, flash_info_t *info);
+static ulong flash_get_size(vu_short *addr, flash_info_t *info);
+static int write_short(flash_info_t *info, ulong dest, ushort data);
+static void flash_get_offsets(ulong base, flash_info_t *info);
 
 /*
  * Initialize flash
  */
 
-unsigned long flash_init (void)
-{
+unsigned long flash_init(void) {
 	unsigned long size_b0;
 	int i;
 
 	/* Init: no FLASHes known */
-	for (i=0; i<CONFIG_SYS_MAX_FLASH_BANKS; ++i) {
+	for (i = 0; i < CONFIG_SYS_MAX_FLASH_BANKS; ++i) {
 		flash_info[i].flash_id = FLASH_UNKNOWN;
 	}
 
 	/* Static FLASH Bank configuration here - FIXME XXX */
 #if 1
-	debug ("\n## Get flash bank 1 size @ 0x%08x\n",FLASH_BASE0_PRELIM);
+	debug("\n## Get flash bank 1 size @ 0x%08x\n", FLASH_BASE0_PRELIM);
 #endif
-	size_b0 = flash_get_size((vu_short *)FLASH_BASE0_PRELIM, &flash_info[0]);
+	size_b0 = flash_get_size((vu_short *) FLASH_BASE0_PRELIM, &flash_info[0]);
 
 	if (flash_info[0].flash_id == FLASH_UNKNOWN) {
-		printf ("## Unknown FLASH on Bank 0: "
-			"ID 0x%lx, Size = 0x%08lx = %ld MB\n",
-			flash_info[0].flash_id,
-			size_b0, size_b0<<20);
+		printf("## Unknown FLASH on Bank 0: "
+				"ID 0x%lx, Size = 0x%08lx = %ld MB\n", flash_info[0].flash_id,
+				size_b0, size_b0 << 20);
 	}
 
-	flash_get_offsets (FLASH_BASE0_PRELIM, &flash_info[0]);
+	flash_get_offsets(FLASH_BASE0_PRELIM, &flash_info[0]);
 
 	flash_info[0].size = size_b0;
 
 #if CONFIG_SYS_MONITOR_BASE >= CONFIG_SYS_FLASH_BASE
 	/* monitor protection ON by default */
-	flash_protect(FLAG_PROTECT_SET,
-		      CONFIG_SYS_MONITOR_BASE,
-		      CONFIG_SYS_MONITOR_BASE+monitor_flash_len-1,
-		      &flash_info[0]);
+	flash_protect(FLAG_PROTECT_SET, CONFIG_SYS_MONITOR_BASE,
+			CONFIG_SYS_MONITOR_BASE + monitor_flash_len - 1, &flash_info[0]);
 #endif
 
 #ifdef	CONFIG_ENV_IS_IN_FLASH
 	/* ENV protection ON by default */
 	flash_protect(FLAG_PROTECT_SET,
-		      CONFIG_ENV_ADDR,
-		      CONFIG_ENV_ADDR+CONFIG_ENV_SECT_SIZE-1,
-		      &flash_info[0]);
+			CONFIG_ENV_ADDR,
+			CONFIG_ENV_ADDR+CONFIG_ENV_SECT_SIZE-1,
+			&flash_info[0]);
 #endif
 
 	return size_b0;
@@ -125,8 +120,7 @@ unsigned long flash_init (void)
  * Compute start adress of each sector (block)
  */
 
-static void flash_get_offsets (ulong base, flash_info_t *info)
-{
+static void flash_get_offsets(ulong base, flash_info_t *info) {
 	int i;
 
 	if (info->flash_id == FLASH_UNKNOWN) {
@@ -135,49 +129,66 @@ static void flash_get_offsets (ulong base, flash_info_t *info)
 
 	switch (info->flash_id & FLASH_VENDMASK) {
 	case FLASH_MAN_INTEL:
-	    for (i = 0; i < info->sector_count; i++) {
-		info->start[i] = base + i * FLASH_BLOCK_SIZE;
-	    }
-	    return;
+		for (i = 0; i < info->sector_count; i++) {
+			info->start[i] = base + i * FLASH_BLOCK_SIZE;
+		}
+		return;
 
 	default:
-	    printf ("Don't know sector offsets for flash type 0x%lx\n",
-		info->flash_id);
-	    return;
+		printf("Don't know sector offsets for flash type 0x%lx\n",
+				info->flash_id);
+		return;
 	}
 }
 
 /*
  * Print flash information
  */
-void flash_print_info  (flash_info_t *info)
-{
+void flash_print_info(flash_info_t *info) {
 	int i;
 
 	if (info->flash_id == FLASH_UNKNOWN) {
-		printf ("missing or unknown FLASH type\n");
+		printf("missing or unknown FLASH type\n");
 		return;
 	}
 
 	switch (info->flash_id & FLASH_VENDMASK) {
-	case FLASH_MAN_AMD:	printf ("AMD ");		break;
-	case FLASH_MAN_FUJ:	printf ("Fujitsu ");		break;
-	case FLASH_MAN_SST:	printf ("SST ");		break;
-	case FLASH_MAN_STM:	printf ("STM ");		break;
-	case FLASH_MAN_INTEL:	printf ("Intel ");		break;
-	case FLASH_MAN_MT:	printf ("MT ");			break;
-	default:		printf ("Unknown Vendor ");	break;
+	case FLASH_MAN_AMD:
+		printf("AMD ");
+		break;
+	case FLASH_MAN_FUJ:
+		printf("Fujitsu ");
+		break;
+	case FLASH_MAN_SST:
+		printf("SST ");
+		break;
+	case FLASH_MAN_STM:
+		printf("STM ");
+		break;
+	case FLASH_MAN_INTEL:
+		printf("Intel ");
+		break;
+	case FLASH_MAN_MT:
+		printf("MT ");
+		break;
+	default:
+		printf("Unknown Vendor ");
+		break;
 	}
 
 	switch (info->flash_id & FLASH_TYPEMASK) {
-	case FLASH_28F320J3A:	printf ("28F320J3A (32Mbit) 16-Bit\n");
-				break;
-	case FLASH_28F640J3A:	printf ("28F640J3A (64Mbit) 16-Bit\n");
-				break;
-	case FLASH_28F128J3A:	printf ("28F128J3A (128Mbit) 16-Bit\n");
-				break;
-	default:		printf ("Unknown Chip Type\n");
-				break;
+	case FLASH_28F320J3A:
+		printf("28F320J3A (32Mbit) 16-Bit\n");
+		break;
+	case FLASH_28F640J3A:
+		printf("28F640J3A (64Mbit) 16-Bit\n");
+		break;
+	case FLASH_28F128J3A:
+		printf("28F128J3A (128Mbit) 16-Bit\n");
+		break;
+	default:
+		printf("Unknown Chip Type\n");
+		break;
 	}
 
 	if (info->size >= (1 << 20)) {
@@ -185,21 +196,17 @@ void flash_print_info  (flash_info_t *info)
 	} else {
 		i = 10;
 	}
-	printf ("  Size: %ld %cB in %d Sectors\n",
-		info->size >> i,
-		(i == 20) ? 'M' : 'k',
-		info->sector_count);
+	printf("  Size: %ld %cB in %d Sectors\n", info->size >> i,
+			(i == 20) ? 'M' : 'k', info->sector_count);
 
-	printf ("  Sector Start Addresses:");
-	for (i=0; i<info->sector_count; ++i) {
+	printf("  Sector Start Addresses:");
+	for (i = 0; i < info->sector_count; ++i) {
 		if ((i % 5) == 0)
-			printf ("\n   ");
-		printf (" %08lX%s",
-			info->start[i],
-			info->protect[i] ? " (RO)" : "     "
-		);
+			printf("\n   ");
+		printf(" %08lX%s", info->start[i],
+				info->protect[i] ? " (RO)" : "     ");
 	}
-	printf ("\n");
+	printf("\n");
 	return;
 }
 
@@ -208,8 +215,7 @@ void flash_print_info  (flash_info_t *info)
  * The following code cannot be run from FLASH!
  */
 
-static ulong flash_get_size (vu_short *addr, flash_info_t *info)
-{
+static ulong flash_get_size(vu_short *addr, flash_info_t *info) {
 	vu_short value;
 
 	/* Read Manufacturer ID */
@@ -236,94 +242,91 @@ static ulong flash_get_size (vu_short *addr, flash_info_t *info)
 		info->flash_id = FLASH_UNKNOWN;
 		info->sector_count = 0;
 		info->size = 0;
-		addr[0] = FLASH_CMD_RESET;	/* restore read mode */
-		return (0);			/* no or unknown flash	*/
+		addr[0] = FLASH_CMD_RESET; /* restore read mode */
+		return (0); /* no or unknown flash	*/
 	}
 
-	value = addr[1];			/* device ID		*/
+	value = addr[1]; /* device ID		*/
 
 	switch (value) {
-	case (INTEL_ID_28F320J3A  & FLASH_ID_MASK):
+	case (INTEL_ID_28F320J3A & FLASH_ID_MASK):
 		info->flash_id += FLASH_28F320J3A;
 		info->sector_count = 32;
 		info->size = 0x00400000;
-		break;				/* =>  32 MBit		*/
+		break; /* =>  32 MBit		*/
 
 	case (INTEL_ID_28F640J3A & FLASH_ID_MASK):
 		info->flash_id += FLASH_28F640J3A;
 		info->sector_count = 64;
 		info->size = 0x00800000;
-		break;				/* => 64 MBit		*/
+		break; /* => 64 MBit		*/
 
 	case (INTEL_ID_28F128J3A & FLASH_ID_MASK):
 		info->flash_id += FLASH_28F128J3A;
 		info->sector_count = 128;
 		info->size = 0x01000000;
-		break;				/* => 128 MBit		*/
+		break; /* => 128 MBit		*/
 
 	default:
 		info->flash_id = FLASH_UNKNOWN;
-		addr[0] = FLASH_CMD_RESET;	/* restore read mode */
-		return (0);			/* => no or unknown flash */
+		addr[0] = FLASH_CMD_RESET; /* restore read mode */
+		return (0); /* => no or unknown flash */
 
 	}
 
 	if (info->sector_count > CONFIG_SYS_MAX_FLASH_SECT) {
-		printf ("** ERROR: sector count %d > max (%d) **\n",
-			info->sector_count, CONFIG_SYS_MAX_FLASH_SECT);
+		printf("** ERROR: sector count %d > max (%d) **\n", info->sector_count,
+				CONFIG_SYS_MAX_FLASH_SECT);
 		info->sector_count = CONFIG_SYS_MAX_FLASH_SECT;
 	}
 
-	addr[0] = FLASH_CMD_RESET;		/* restore read mode */
+	addr[0] = FLASH_CMD_RESET; /* restore read mode */
 
 	return (info->size);
 }
-
 
 /*
  * Erase unprotected sectors
  */
 
-int flash_erase (flash_info_t *info, int s_first, int s_last)
-{
+int flash_erase(flash_info_t *info, int s_first, int s_last) {
 	int flag, prot, sect;
 	ulong start, now, last;
 
 	if ((s_first < 0) || (s_first > s_last)) {
 		if (info->flash_id == FLASH_UNKNOWN) {
-			printf ("- missing\n");
+			printf("- missing\n");
 		} else {
-			printf ("- no sectors to erase\n");
+			printf("- no sectors to erase\n");
 		}
 		return 1;
 	}
 
 	if ((info->flash_id & FLASH_VENDMASK) != FLASH_MAN_INTEL) {
-		printf ("Can erase only Intel flash types - aborted\n");
+		printf("Can erase only Intel flash types - aborted\n");
 		return 1;
 	}
 
 	prot = 0;
-	for (sect=s_first; sect<=s_last; ++sect) {
+	for (sect = s_first; sect <= s_last; ++sect) {
 		if (info->protect[sect]) {
 			prot++;
 		}
 	}
 
 	if (prot) {
-		printf ("- Warning: %d protected sectors will not be erased!\n",
-			prot);
+		printf("- Warning: %d protected sectors will not be erased!\n", prot);
 	} else {
-		printf ("\n");
+		printf("\n");
 	}
 
-	start = get_timer (0);
-	last  = start;
+	start = get_timer(0);
+	last = start;
 
 	/* Start erase on unprotected sectors */
-	for (sect = s_first; sect<=s_last; sect++) {
-		if (info->protect[sect] == 0) {	/* not protected */
-			vu_short *addr = (vu_short *)(info->start[sect]);
+	for (sect = s_first; sect <= s_last; sect++) {
+		if (info->protect[sect] == 0) { /* not protected */
+			vu_short *addr = (vu_short *) (info->start[sect]);
 			unsigned long status;
 
 			/* Disable interrupts which might cause a timeout here */
@@ -342,26 +345,27 @@ int flash_erase (flash_info_t *info, int s_first, int s_last)
 				enable_interrupts();
 
 			/* wait at least 80us - let's wait 1 ms */
-			udelay (1000);
+			udelay(1000);
 
 			while (((status = *addr) & FLASH_STATUS_DONE) != FLASH_STATUS_DONE) {
-				if ((now=get_timer(start)) > CONFIG_SYS_FLASH_ERASE_TOUT) {
-					printf("Flash erase timeout at address %lx\n", info->start[sect]);
+				if ((now = get_timer(start)) > CONFIG_SYS_FLASH_ERASE_TOUT) {
+					printf("Flash erase timeout at address %lx\n",
+							info->start[sect]);
 					*addr = FLASH_CMD_SUSPEND_ERASE;
 					*addr = FLASH_CMD_RESET;
 					return 1;
 				}
 
 				/* show that we're waiting */
-				if ((now - last) > 1000) {	/* every second */
-					putc ('.');
+				if ((now - last) > 1000) { /* every second */
+					putc('.');
 					last = now;
 				}
 			}
 			*addr = FLASH_CMD_RESET;
 		}
 	}
-	printf (" done\n");
+	printf(" done\n");
 	return 0;
 }
 
@@ -373,8 +377,7 @@ int flash_erase (flash_info_t *info, int s_first, int s_last)
  * 4 - Flash not identified
  */
 
-int write_buff (flash_info_t *info, uchar *src, ulong addr, ulong cnt)
-{
+int write_buff(flash_info_t *info, uchar *src, ulong addr, ulong cnt) {
 	ulong cp, wp;
 	ushort data;
 	int i, rc;
@@ -383,7 +386,7 @@ int write_buff (flash_info_t *info, uchar *src, ulong addr, ulong cnt)
 		return 4;
 	}
 
-	wp = (addr & ~1);	/* get lower word aligned address */
+	wp = (addr & ~1); /* get lower word aligned address */
 
 	/*
 	 * handle unaligned start byte
@@ -391,17 +394,17 @@ int write_buff (flash_info_t *info, uchar *src, ulong addr, ulong cnt)
 
 	if (addr - wp) {
 		data = 0;
-                for(i = 0, cp = wp; i < 1; ++i, ++cp){
-                   data = (data >> 8) | (*(uchar *) cp << 8);
-                }
-                for(; i < 2 && cnt > 0; ++i){
-		data = (data >> 8) | (*src++ <<8);
-		--cnt;
-                ++cp;
-                } 
-                for(; cnt == 0 && i < 2; ++i, ++cp){
-                data = (data >> 8) | (*(uchar *) cp << 8);
-                }
+		for (i = 0, cp = wp; i < 1; ++i, ++cp) {
+			data = (data >> 8) | (*(uchar *) cp << 8);
+		}
+		for (; i < 2 && cnt > 0; ++i) {
+			data = (data >> 8) | (*src++ << 8);
+			--cnt;
+			++cp;
+		}
+		for (; cnt == 0 && i < 2; ++i, ++cp) {
+			data = (data >> 8) | (*(uchar *) cp << 8);
+		}
 		if ((rc = write_short(info, wp, data)) != 0) {
 			return (rc);
 		}
@@ -414,16 +417,16 @@ int write_buff (flash_info_t *info, uchar *src, ulong addr, ulong cnt)
 
 	while (cnt >= 2) {
 		/*data = 0;
-		for (i=0; i<2; ++i) {
-			data = (data << 8) | *src++;
-		}*/
-                data = *((vu_short *) src) ;
+		 for (i=0; i<2; ++i) {
+		 data = (data << 8) | *src++;
+		 }*/
+		data = *((vu_short *) src);
 
 		if ((rc = write_short(info, wp, data)) != 0) {
 			return (rc);
 		}
-                src += 2;
-		wp  += 2;
+		src += 2;
+		wp += 2;
 		cnt -= 2;
 	}
 
@@ -436,12 +439,12 @@ int write_buff (flash_info_t *info, uchar *src, ulong addr, ulong cnt)
 	 */
 
 	data = 0;
-	for (i=0, cp=wp; i<2 && cnt>0; ++i, ++cp) {
+	for (i = 0, cp = wp; i < 2 && cnt > 0; ++i, ++cp) {
 		data = (data >> 8) | (*src++ << 8);
 		--cnt;
 	}
-	for (; i<2; ++i, ++cp) {
-		data = (data >> 8) | (*(uchar *)cp << 8);
+	for (; i < 2; ++i, ++cp) {
+		data = (data >> 8) | (*(uchar *) cp << 8);
 	}
 
 	return (write_short(info, wp, data));
@@ -452,14 +455,13 @@ int write_buff (flash_info_t *info, uchar *src, ulong addr, ulong cnt)
  * Write 16 bit (short) to flash
  */
 
-static int write_short (flash_info_t *info, ulong dest, ushort data)
-{
-	vu_short *addr = (vu_short*)(info->start[0]);
+static int write_short(flash_info_t *info, ulong dest, ushort data) {
+	vu_short *addr = (vu_short*) (info->start[0]);
 	ulong start;
 	int flag;
 
 	/* Check if Flash is (sufficiently) erased */
-	if ((*((vu_short *)dest) & data) != data) {
+	if ((*((vu_short *) dest) & data) != data) {
 		return (2);
 	}
 
@@ -472,7 +474,7 @@ static int write_short (flash_info_t *info, ulong dest, ushort data)
 	*addr = FLASH_CMD_ERASE_CONFIRM;
 	*addr = FLASH_CMD_WRITE;
 
-	*((vu_short *)dest) = data;
+	*((vu_short *) dest) = data;
 
 	/* re-enable interrupts if necessary */
 	if (flag) {
@@ -480,10 +482,10 @@ static int write_short (flash_info_t *info, ulong dest, ushort data)
 	}
 
 	/* data polling for D7 */
-	start = get_timer (0);
+	start = get_timer(0);
 
 	/* wait for error or finish */
-	while(!(addr[0] & FLASH_STATUS_DONE)){
+	while (!(addr[0] & FLASH_STATUS_DONE)) {
 		if (get_timer(start) > CONFIG_SYS_FLASH_WRITE_TOUT) {
 			addr[0] = FLASH_CMD_RESET;
 			return (1);
@@ -498,25 +500,25 @@ static int write_short (flash_info_t *info, ulong dest, ushort data)
  * Protects a flash sector
  */
 
-int flash_real_protect(flash_info_t *info, long sector, int prot)
-{
-	vu_short *addr = (vu_short*)(info->start[sector]);
+int flash_real_protect(flash_info_t *info, long sector, int prot) {
+	vu_short *addr = (vu_short*) (info->start[sector]);
 	ulong start;
 
 	*addr = FLASH_CMD_CLEAR_STATUS;
 	*addr = FLASH_CMD_PROTECT;
 
-	if(prot) {
+	if (prot) {
 		*addr = FLASH_CMD_PROTECT_SET;
 	} else {
 		*addr = FLASH_CMD_PROTECT_CLEAR;
 	}
 
 	/* wait for error or finish */
-	start = get_timer (0);
-	while(!(addr[0] & FLASH_STATUS_DONE)){
+	start = get_timer(0);
+	while (!(addr[0] & FLASH_STATUS_DONE)) {
 		if (get_timer(start) > CONFIG_SYS_FLASH_ERASE_TOUT) {
-			printf("Flash protect timeout at address %lx\n",  info->start[sector]);
+			printf("Flash protect timeout at address %lx\n",
+					info->start[sector]);
 			addr[0] = FLASH_CMD_RESET;
 			return (1);
 		}
