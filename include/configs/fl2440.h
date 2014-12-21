@@ -40,11 +40,9 @@
 
 #define CONFIG_FL2440_LED 1
 
-/*****add by yanghao*****/
 /*use to run the uboot in sdram*/
 //#define CONFIG_SKIP_LOWLEVEL_INIT   1
 //#define CONFIG_SKIP_RELOCATE_UBOOT  1
-/*****add by yanghao*****/
 
 /* input clock of PLL */
 #define CONFIG_SYS_CLK_FREQ	12000000/* the SMDK2410 has 12MHz input clock */
@@ -69,7 +67,6 @@
 #define CONFIG_CS8900_BUS16	/* the Linux driver does accesses as shorts */
 #endif
 
-/*****add by yanghao*****/
 #define CONFIG_DRIVER_DM9000             1
 #define CONFIG_DM9000_USE_16BIT          1
 #define CONFIG_DM9000_BASE               0x20000300
@@ -77,7 +74,6 @@
 #define DM9000_DATA                      (CONFIG_DM9000_BASE + 4)
 #define CONFIG_DM9000_NO_SROM            1 //防止dm9000去从srom中读取物理地址信息
 #define CONFIG_NET_MULTI                 1
-/*****add by yanghao*****/
 
 /*
  * select serial console configuration
@@ -114,12 +110,12 @@
 #define CONFIG_CMD_DATE
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_ELF
-#define CONFIG_CMD_PING   /*****add by yanghao*****/
-#define CONFIG_CMD_NAND   /*****add by yanghao*****/
-#define CONFIG_CMD_NET    /*add by yanghao*/
-#define CONFIG_CMD_JFFS2  /*add by yanghao see JFFS2 define*/
-#define CONFIG_CMD_USB    /*add by yanghao see USB define*/
-#define CONFIG_CMD_FAT    /*add by yanghao see VFAT define*/
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_NAND
+#define CONFIG_CMD_NET
+#define CONFIG_CMD_JFFS2
+#define CONFIG_CMD_USB
+#define CONFIG_CMD_FAT
 
 //#define CONFIG_MTD_DEVICE /*bug when I add the command, I found the bootloader has the problem that the nand command can't run success, I check the code but I can't found where the problem is*/
 
@@ -164,7 +160,7 @@
  * Miscellaneous configurable options
  */
 #define	CONFIG_SYS_LONGHELP				/* undef to save memory		*/
-#define	CONFIG_SYS_PROMPT		"Yanghao # "	/* Monitor Command Prompt	*/
+#define	CONFIG_SYS_PROMPT		"fl2440 > "	/* Monitor Command Prompt	*/
 #define	CONFIG_SYS_CBSIZE		256		/* Console I/O Buffer Size	*/
 #define	CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16) /* Print Buffer Size */
 #define	CONFIG_SYS_MAXARGS		16		/* max number of command args	*/
@@ -216,9 +212,6 @@
 #define FLASH_BASE0_PRELIM      PHYS_FLASH_1      /*CMI/flash.c need*/
 #endif
 
-
-
-
 /* timeout values are in ticks */
 #define CONFIG_SYS_FLASH_ERASE_TOUT	(5*CONFIG_SYS_HZ) /* Timeout for Flash Erase */
 #define CONFIG_SYS_FLASH_WRITE_TOUT	(5*CONFIG_SYS_HZ) /* Timeout for Flash Write */
@@ -228,10 +221,6 @@
 #define	CONFIG_ENV_IS_IN_NAND	1
 #define CONFIG_ENV_OFFSET   0x80000
 
-
-
-
-/********************add by yanghao********************/
 /*JFFS2 support*/
 /*#undef CONFIG_JFFS2_CMDLINE*/
 #if 1
@@ -253,7 +242,6 @@
 /*USB support*/
 
 #if 1
-/*****************add by yanghao support LCD********************/
 /*LCD support*/
 #define CONFIG_VIDEO_S3C2440     1
 #define CONFIG_VIDEO_LOGO        1
@@ -288,18 +276,20 @@
 #define CONFIG_CMDLINE_TAG          1      /* 向内核传递命令行参数 */
 
 #define CONFIG_BOOTDELAY	5
-/******** nfs ways to boot linux 
-#define CONFIG_BOOTARGS                 "console=ttySAC0,115200 noinitrd root=/dev/nfs rw nfsroot=192.168.1.2:/home/yanghao/nfs/rootfs ip=192.168.1.4:192.168.1.2:192.168.1.1:255.255.255.0:tocore:eth0:on"
-#define CONFIG_BOOTCOMMAND	"nfs 0x30008000 192.168.1.2:/home/yanghao/nfs/zImage; bootm 0x30008000"
-*/
-#define CONFIG_BOOTARGS                 "console=tty0 console=ttySAC0,115200 noinitrd root=/dev/mtdblock2 rootfstype=yaffs2"
-
+#ifdef BOOT_NFS
+#define CONFIG_BOOTARGS     "console=ttySAC0,115200 noinitrd root=/dev/nfs rw nfsroot=192.168.1.2:/home/ilufei/nfs/rootfs ip=192.168.1.4:192.168.1.2:192.168.1.1:255.255.255.0:tocore:eth0:on"
+#define CONFIG_BOOTCOMMAND	"nfs 0x30008000 192.168.1.2:/home/ilufei/nfs/zImage; bootm 0x30008000"
+#else
+#define CONFIG_BOOTARGS     "console=tty0 console=ttySAC0,115200 noinitrd root=/dev/mtdblock2 rootfstype=yaffs2"
 #define CONFIG_BOOTCOMMAND	"nand read 0x30008000 0x600000 0x210000; bootm 0x30008000"
+#endif
 
-//#define DEBUG            1
-//#define CONFIG_MTD_DEBUG  1
-//#define CONFIG_MTD_DEBUG_VERBOSE  0
-//#define DEBUG_CFB_CONSOLE   1
+#if DEBUG
+#define DEBUG            1
+#define CONFIG_MTD_DEBUG  1
+#define CONFIG_MTD_DEBUG_VERBOSE  0
+#define DEBUG_CFB_CONSOLE   1
+#endif
 
 #define CMD_NAND_YAFFS
 #define CMD_NAND_YAFFS_SKIPFB
