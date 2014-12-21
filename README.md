@@ -21,7 +21,6 @@ gcc version 3.4.1
   如果不是使用arm-linux-gcc的同学，需要修改下Makefile中:
   
 143   ifeq ($(ARCH),arm)
-
 144   CROSS_COMPILE = arm-linux- 
 
 
@@ -29,6 +28,6 @@ gcc version 3.4.1
 
   当环境没有问题的时候，可以使用如下命令来编译uboot
   
-$ make fl2440-config && make
+$ make fl2440_config && make
 
   即可编译了。
