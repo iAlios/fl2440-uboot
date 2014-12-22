@@ -36,9 +36,7 @@ static GraphicDevice smi;
 #define VIDEO_MEM_SIZE  0x200000        /* 240x320x16bit = 0x25800 bytes */
  
 extern void board_video_init( GraphicDevice *pGD);
-/*
- * Add by yanghao
- */
+
 //#if defined(CONFIG_VIDEO_S3C2440)
 #if   0
 //#define MVAL                   (13)

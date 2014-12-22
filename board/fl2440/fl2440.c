@@ -165,9 +165,6 @@ int dram_init(void) {
 	return 0;
 }
 
-/*
- * Add by yanghao
- */
 #if defined(CONFIG_VIDEO_S3C2440)
 #define MVAL                   (13)
 #define MVAL_USED              (0)
