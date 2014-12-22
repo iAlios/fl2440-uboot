@@ -40,6 +40,7 @@
 
 #define CONFIG_FL2440_LED 1
 
+#define DEBUG            1
 /*use to run the uboot in sdram*/
 //#define CONFIG_SKIP_LOWLEVEL_INIT   1
 //#define CONFIG_SKIP_RELOCATE_UBOOT  1
@@ -259,7 +260,6 @@
 
 /*for PC-keyboard*/
 #define VIDEO_KBD_INIT_FCT      0
-/*for PC-keyboard*/
 
 #define VIDEO_TSTC_FCT          serial_tstc
 #define VIDEO_GETC_FCT          serial_getc
