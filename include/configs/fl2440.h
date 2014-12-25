@@ -40,7 +40,7 @@
 
 #define CONFIG_FL2440_LED 1
 
-#define DEBUG            1
+// #define DEBUG            1
 /*use to run the uboot in sdram*/
 //#define CONFIG_SKIP_LOWLEVEL_INIT   1
 //#define CONFIG_SKIP_RELOCATE_UBOOT  1
@@ -280,7 +280,8 @@
 #define CONFIG_BOOTARGS     "console=ttySAC0,115200 noinitrd root=/dev/nfs rw nfsroot=192.168.1.2:/home/ilufei/nfs/rootfs ip=192.168.1.4:192.168.1.2:192.168.1.1:255.255.255.0:tocore:eth0:on"
 #define CONFIG_BOOTCOMMAND	"nfs 0x30008000 192.168.1.2:/home/ilufei/nfs/zImage; bootm 0x30008000"
 #else
-#define CONFIG_BOOTARGS     "console=tty0 console=ttySAC0,115200 noinitrd root=/dev/mtdblock2 rootfstype=yaffs2"
+// #define CONFIG_BOOTARGS     "console=tty0 console=ttySAC0,115200 noinitrd root=/dev/mtdblock2 rootfstype=yaffs2"
+#define CONFIG_BOOTARGS     "console=ttySAC0,115200 noinitrd root=/dev/mtdblock2 rootfstype=yaffs2"
 #define CONFIG_BOOTCOMMAND	"nand read 0x30008000 0x600000 0x210000; bootm 0x30008000"
 #endif
 

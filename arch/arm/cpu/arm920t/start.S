@@ -240,6 +240,12 @@ str r2, [r1]
 	 * not when booting from ram!
 	 */
 
+#ifdef CONFIG_S3C2440
+   mov r1, #GPIO_CTL_BASE
+   add r1, r1, #oGPIO_BDAT
+   mov r2, #oGPIO_LIGHT_LED1
+   str r2, [r1]
+#endif
 	adr	r0, _start		/* r0 <- current position of code   */
 	ldr	r1, _TEXT_BASE		/* test if we run from flash or RAM */
 	cmp     r0, r1                  /* don't reloc during debug         */
