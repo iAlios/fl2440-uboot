@@ -250,6 +250,7 @@
 //#define VIDEO_FB_16BPP_PIXEL_SWAP       1 /*注意在后面版本中它已经改名，如果不添加会使图像显示模糊*/
 #define VIDEO_FB_16BPP_WORD_SWAP       1
 #define CONFIG_CMD_BMP                  1
+//#define CONFIG_SPLASH_SCREEN
 //#define CONFIG_LCD               1
 #define CONFIG_VIDEO               1
 #define CONFIG_CFB_CONSOLE       1
@@ -281,7 +282,7 @@
 #define CONFIG_BOOTCOMMAND	"nfs 0x30008000 192.168.1.2:/home/ilufei/nfs/zImage; bootm 0x30008000"
 #else
 // #define CONFIG_BOOTARGS     "console=tty0 console=ttySAC0,115200 noinitrd root=/dev/mtdblock2 rootfstype=yaffs2"
-#define CONFIG_BOOTARGS     "console=ttySAC0,115200 noinitrd root=/dev/mtdblock2 rootfstype=yaffs2"
+#define CONFIG_BOOTARGS     "console=tty0 console=ttySAC0,115200 noinitrd root=/dev/mtdblock2 rootfstype=yaffs2"
 #define CONFIG_BOOTCOMMAND	"nand read 0x30008000 0x600000 0x210000; bootm 0x30008000"
 #endif
 
