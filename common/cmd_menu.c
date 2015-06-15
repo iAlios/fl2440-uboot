@@ -106,5 +106,5 @@ int do_menu(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 }
 
 U_BOOT_CMD(menu, 3, 0, do_menu,
-		"menu - display a menu, to select the items to do something\n",
+		"menu - display a menu, to select the items to do something",
 		" - display a menu, to select the items to do something");
