@@ -31,3 +31,10 @@ gcc version 3.4.1
 $ make fl2440_config && make
 
   即可编译了。
+
+
+
+
+部分宏定义说明
+CONFIG_SYS_CONSOLE_IS_IN_ENV       如果不定义，只能在 LCD 上显示，而tty没有显示
+

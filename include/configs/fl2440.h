@@ -176,6 +176,11 @@
 
 /* valid baudrates */
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
+/**
+ * CONFIG_SYS_CONSOLE_IS_IN_ENV is important to serial console!
+ * Define this if you want stdin, stdout and/or stderr to be set to usbtty.
+ */
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
 
 /*-----------------------------------------------------------------------
  * Stack sizes
