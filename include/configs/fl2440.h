@@ -38,6 +38,8 @@
 #define CONFIG_S3C2440	1	/* specifically a SAMSUNG S3C2410 SoC	*/
 #define CONFIG_FL2440	1	/* on a fl2440 Board  */
 
+#define CONFIG_FL2440_LCD	1
+
 #define CONFIG_FL2440_LED 1
 
 // #define DEBUG            1
@@ -61,13 +63,6 @@
 /*
  * Hardware drivers
  */
-#if 0
-#define CONFIG_NET_MULTI
-#define CONFIG_CS8900		/* we have a CS8900 on-board */
-#define CONFIG_CS8900_BASE	0x19000300
-#define CONFIG_CS8900_BUS16	/* the Linux driver does accesses as shorts */
-#endif
-
 #define CONFIG_DRIVER_DM9000             1
 #define CONFIG_DM9000_USE_16BIT          1
 #define CONFIG_DM9000_BASE               0x20000300
@@ -117,29 +112,21 @@
 #define CONFIG_CMD_JFFS2
 #define CONFIG_CMD_USB
 #define CONFIG_CMD_FAT
+#define CONFIG_CMD_MTDPARTS
+// #define CONFIG_CMD_FASTBOOT
 
-//#define CONFIG_MTD_DEVICE /*bug when I add the command, I found the bootloader has the problem that the nand command can't run success, I check the code but I can't found where the problem is*/
+#if defined(CONFIG_FL2440)
+#define CONFIG_MTD_DEVICE 
+#define CONFIG_MTD_PARTITIONS
+//#define CONFIG_FLASH_CFI_DRIVER 
+//#define CONFIG_FLASH_CFI_MTD
+#endif
 
 #if defined(CONFIG_CMD_NAND)
-
 #define CONFIG_NAND_S3C2410
 #define CONFIG_SYS_MAX_NAND_DEVICE   1     /* Max number of NAND devices        */
 #define NAND_MAX_CHIPS			1
 #define CONFIG_SYS_NAND_BASE 0x4E000000
-#if 0
-#define CONFIG_NAND_S3C2410
-#define CONFIG_SYS_NAND_BASE 0x4E000000 
-#define CONFIG_SYS_MAX_NAND_DEVICE	1	/* Max number of NAND devices		*/
-#define SECTORSIZE 512
-#define SECTORSIZE_2K 2048
-#define NAND_SECTOR_SIZE SECTORSIZE
-#define NAND_SECTOR_SIZE_2K SECTORSIZE_2K
-#define NAND_BLOCK_MASK 511
-#define NAND_BLOCK_MASK_2K 2047
-#define NAND_MAX_CHIPS 1
-#define CONFIG_MTD_NAND_VERIFY_WRITE 
-#define CONFIG_SYS_64BIT_VSPRINTF       /* needed for nand_util.c */
-#endif
 #endif
 
 
@@ -148,7 +135,6 @@
 #define CONFIG_NETMASK          255.255.255.0
 #define CONFIG_IPADDR		192.168.1.4
 #define CONFIG_SERVERIP		192.168.1.1
-/*#define CONFIG_BOOTFILE	"elinos-lart" */
 /*#define CONFIG_BOOTCOMMAND	"tftp; bootm" */
 
 #if defined(CONFIG_CMD_KGDB)
@@ -157,6 +143,15 @@
 #define CONFIG_KGDB_SER_INDEX	1		/* which serial port to use */
 #endif
 
+#define MTDIDS_DEFAULT          "nand0=nand0"
+
+#define MTDPARTS_DEFAULT        "mtdparts=nand0:1m@0(u-boot),"				\
+                                "256k(params),"  								\
+                                "1m(logo),"                                     \
+                                "5m(kernel),"                                   \
+                                "-(rootfs)"                      
+#define CONFIG_EXTRA_ENV_SETTINGS       "mtdid=" MTDIDS_DEFAULT "\0"            \
+                                        "mtdparts=" MTDPARTS_DEFAULT "\0"
 /*
  * Miscellaneous configurable options
  */
@@ -200,7 +195,7 @@
 #define PHYS_SDRAM_1		0x30000000 /* SDRAM Bank #1 */
 #define PHYS_SDRAM_1_SIZE	0x04000000 /* 64 MB */
 
-#define PHYS_FLASH_1		0x00000000 /* Flash Bank #1 */
+#define PHYS_FLASH_1		0x08000000 /* Flash Bank #1 */
 
 #define CONFIG_SYS_FLASH_BASE		PHYS_FLASH_1
 
@@ -212,6 +207,7 @@
 #define CONFIG_SYS_MAX_FLASH_BANKS	1	/* max number of memory banks */
 #ifdef CONFIG_FL2440
 #define PHYS_FLASH_SIZE		0x00400000 /* 4MB */
+
 #define CONFIG_SYS_MAX_FLASH_SECT	(32)	/* max number of sectors on one chip */
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_FLASH_BASE + 0x0F0000) /* addr of environment */
 #define CONFIG_SYS_MONITOR_BASE  TEXT_BASE  /*CMI/flash.c need*/
@@ -229,7 +225,7 @@
 
 /*JFFS2 support*/
 /*#undef CONFIG_JFFS2_CMDLINE*/
-#if 1
+#if 0
 #define CONFIG_JFFS2_CMDLINE       1    /*when you not use nand legancy*/
 #define CONFIG_JFFS2_NAND          1
 #define CONFIG_JFFS2_DEV           "nand0"
@@ -247,19 +243,17 @@
 #define LITTLEEDIAN
 /*USB support*/
 
-#if 1
+#ifdef CONFIG_FL2440_LCD
 /*LCD support*/
 #define CONFIG_VIDEO_S3C2440     1
 #define CONFIG_VIDEO_LOGO        1
 #define CONFIG_VIDEO_BMP_LOGO           1
-//#define VIDEO_FB_16BPP_PIXEL_SWAP       1 /*注意在后面版本中它已经改名，如果不添加会使图像显示模糊*/
 #define VIDEO_FB_16BPP_WORD_SWAP       1
 #define CONFIG_CMD_BMP                  1
 //#define CONFIG_SPLASH_SCREEN
 //#define CONFIG_LCD               1
 #define CONFIG_VIDEO               1
 #define CONFIG_CFB_CONSOLE       1
-//#define CONFIG_VGA_AS_SINGLE_DEVICE 1          //see Cfb_console.c/drv_video_init
 #define CFG_CONSOLE_INFO_QUIET        //support display of console information at boot
 
 #define LCD_VIDEO_ADDR          0x33b00000
@@ -275,30 +269,30 @@
 #endif
 
 #define CONFIG_CMDLINE_EDITING   1
-#define CONFIG_AUTO_COMPLETE     1 //自动补全命令等
+#define CONFIG_AUTO_COMPLETE     1 
 
 /* boot cmdline*/
-#define CONFIG_SETUP_MEMORY_TAGS    1      /* 向内核传递内存分布信息 */
-#define CONFIG_CMDLINE_TAG          1      /* 向内核传递命令行参数 */
+#define CONFIG_SETUP_MEMORY_TAGS    1     
+#define CONFIG_CMDLINE_TAG          1      
 
 #define CONFIG_BOOTDELAY	5
 #ifdef BOOT_NFS
-#define CONFIG_BOOTARGS     "console=ttySAC0,115200 noinitrd root=/dev/nfs rw nfsroot=192.168.1.2:/home/ilufei/nfs/rootfs ip=192.168.1.4:192.168.1.2:192.168.1.1:255.255.255.0:tocore:eth0:on"
+#define CONFIG_BOOTARGS     "console=ttySAC0,115200 noinitrd root=/dev/nfs rw nfsroot=192.168.1.2:/home/ilufei/nfs/rootfs ip=192.168.1.4:192.168.1.2:192.168.1.1:255.255.255.0:fl2440:eth0:on"
 #define CONFIG_BOOTCOMMAND	"nfs 0x30008000 192.168.1.2:/home/ilufei/nfs/zImage; bootm 0x30008000"
 #else
-// #define CONFIG_BOOTARGS     "console=tty0 console=ttySAC0,115200 noinitrd root=/dev/mtdblock2 rootfstype=yaffs2"
 #define CONFIG_BOOTARGS     "console=tty0 console=ttySAC0,115200 noinitrd root=/dev/mtdblock2 rootfstype=yaffs2"
 #define CONFIG_BOOTCOMMAND	"nand read 0x30008000 0x600000 0x210000; bootm 0x30008000"
 #endif
 
 #if DEBUG
-#define DEBUG            1
 #define CONFIG_MTD_DEBUG  1
 #define CONFIG_MTD_DEBUG_VERBOSE  0
-#define DEBUG_CFB_CONSOLE   1
+// #define DEBUG_CFB_CONSOLE   1
 #endif
 
 #define CMD_NAND_YAFFS
 #define CMD_NAND_YAFFS_SKIPFB
+
+#define CONFIG_AMD_LV400	1
 
 #endif	/* __CONFIG_H */
