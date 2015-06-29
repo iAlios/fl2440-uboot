@@ -278,28 +278,6 @@ nandflash_boot:
         str     r2,[r1,#oNFCONT]
         ldr     r2,[r1,#oNFCONT]
         
-       /* ldr     r2,=(0x6)   @RnB Clear
-        str     r2,[r1, #oNFSTAT]
-        ldr     r2,[r1, #oNFSTAT]
-
-        mov     r2,#0xff    @RESET command
-        strb    r2,[r1,#oNFCMD]
-
-        mov     r3,#0  @ wait
-nand1:
-        add     r3,r3,#0x1
-        cmp     r3,#0xa
-        blt     nand1
-
-nand2:
-        ldr     r2,[r1,#oNFSTAT]    @wait ready
-        tst     r2,#0x4
-        beq     nand2
-
-        ldr     r2,[r1,#oNFCONT]
-        orr     r2,r2,#0x2       @flash memory chip disable
-        str     r2,[r1,#oNFCONT]*/
-
         @ get read to call C functions
         ldr     sp,DW_STACK_START   @setup stack point
         mov     fp,#0               @no previous frame, so fp = 0

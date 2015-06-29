@@ -170,7 +170,6 @@ int dram_init(void) {
 #define MVAL_USED              (0)
 #define INVVDEN                (1)
 #define BSWP                   (0)
-//#define HWSWP                  (1)//为一时会造成字符显示的错误，显示很模糊
 #define HWSWP                  (1)
 //TFT 240320
 #define LCD_XSIZE_TFT_240320   (320)
@@ -178,25 +177,15 @@ int dram_init(void) {
 //TFT 240320
 #define HOZVAL_TFT_240320      (LCD_XSIZE_TFT_240320-1)
 #define LINEVAL_TFT_240320     (LCD_YSIZE_TFT_240320-1)
-//Timing parameter for WXCAT35-TG#001
-#if 1
+
 #define VBPD_240320            (3)
 #define VFPD_240320            (5)
 #define VSPW_240320            (15)
 #define HBPD_240320            (58)
 #define HFPD_240320            (15)
 #define HSPW_240320_WXCAT35    (8)//adjust the horizontal displacement of the screen
-#endif
-#if 0
-#define VBPD_240320            (14)
-#define VFPD_240320            (11)
-#define VSPW_240320            (2)
-#define HBPD_240320            (37)
-#define HFPD_240320            (19)
-#define HSPW_240320_WXCAT35    (29)
-#endif
 #define CLKVAL_TFT_240320      (7)
-//FCLK = 405MHZ, HCLK = 101.25MHZ, VCLK=4602272HZ
+
 void board_video_init(GraphicDevice *pGD)
 {
 	struct s3c24x0_lcd * const lcd = s3c24x0_get_base_lcd();
