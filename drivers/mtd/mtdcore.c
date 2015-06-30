@@ -10,6 +10,7 @@
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/compat.h>
 #include <ubi_uboot.h>
+#include <config.h>
 
 struct mtd_info *mtd_table[MAX_MTD_DEVICES];
 
@@ -25,6 +26,10 @@ int add_mtd_device(struct mtd_info *mtd)
 			mtd->index = i;
 			mtd->usecount = 0;
 
+			debug("add_mtd_device: mtd->name:value: %ld\n", mtd->name);
+			debug("add_mtd_device: mtd->name:addr: %ld\n", &(mtd->name));
+			debug("add_mtd_device: mtd->name: %s\n", mtd->name);
+			debug("add_mtd_device: mtd: %ld\n", mtd);
 			/* No need to get a refcount on the module containing
 			   the notifier, since we hold the mtd_table_mutex */
 

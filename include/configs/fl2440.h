@@ -42,7 +42,7 @@
 
 #define CONFIG_FL2440_LED 1
 
-// #define DEBUG            1
+#define DEBUG            1
 /*use to run the uboot in sdram*/
 //#define CONFIG_SKIP_LOWLEVEL_INIT   1
 //#define CONFIG_SKIP_RELOCATE_UBOOT  1
@@ -112,14 +112,12 @@
 #define CONFIG_CMD_JFFS2
 #define CONFIG_CMD_USB
 #define CONFIG_CMD_FAT
-#define CONFIG_CMD_MTDPARTS
 // #define CONFIG_CMD_FASTBOOT
 
 #if defined(CONFIG_FL2440)
+#define CONFIG_CMD_MTDPARTS
 #define CONFIG_MTD_DEVICE 
 #define CONFIG_MTD_PARTITIONS
-//#define CONFIG_FLASH_CFI_DRIVER 
-//#define CONFIG_FLASH_CFI_MTD
 #endif
 
 #if defined(CONFIG_CMD_NAND)
@@ -130,12 +128,10 @@
 #endif
 
 
-/*#define CONFIG_BOOTARGS	"root=ramfs devfs=mount console=ttySA0,9600" */
 #define CONFIG_ETHADDR	08:00:3e:26:0a:5b 
 #define CONFIG_NETMASK          255.255.255.0
 #define CONFIG_IPADDR		192.168.1.4
 #define CONFIG_SERVERIP		192.168.1.1
-/*#define CONFIG_BOOTCOMMAND	"tftp; bootm" */
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	115200		/* speed to run kgdb serial port */
@@ -143,15 +139,15 @@
 #define CONFIG_KGDB_SER_INDEX	1		/* which serial port to use */
 #endif
 
-#define MTDIDS_DEFAULT          "nand0=nand0"
-
-#define MTDPARTS_DEFAULT        "mtdparts=nand0:1m@0(u-boot),"				\
+#undef MTDIDS_DEFAULT
+#undef MTDPARTS_DEFAULT
+#define MTDIDS_DEFAULT          "nand0=nand"
+#define MTDPARTS_DEFAULT        "mtdparts=nand:1m(u-boot),"				\
                                 "256k(params),"  								\
                                 "1m(logo),"                                     \
                                 "5m(kernel),"                                   \
                                 "-(rootfs)"                      
-#define CONFIG_EXTRA_ENV_SETTINGS       "mtdid=" MTDIDS_DEFAULT "\0"            \
-                                        "mtdparts=" MTDPARTS_DEFAULT "\0"
+
 /*
  * Miscellaneous configurable options
  */
@@ -202,37 +198,44 @@
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
-
+#define CONFIG_AMD_LV400	1	/* uncomment this if you have a LV400 flash */
 
 #define CONFIG_SYS_MAX_FLASH_BANKS	1	/* max number of memory banks */
-#ifdef CONFIG_FL2440
-#define PHYS_FLASH_SIZE		0x00400000 /* 4MB */
-
-#define CONFIG_SYS_MAX_FLASH_SECT	(32)	/* max number of sectors on one chip */
+#ifdef CONFIG_AMD_LV800
+#define PHYS_FLASH_SIZE		0x00100000 /* 1MB */
+#define CONFIG_SYS_MAX_FLASH_SECT	(19)	/* max number of sectors on one chip */
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_FLASH_BASE + 0x0F0000) /* addr of environment */
-#define CONFIG_SYS_MONITOR_BASE  TEXT_BASE  /*CMI/flash.c need*/
-#define FLASH_BASE0_PRELIM      PHYS_FLASH_1      /*CMI/flash.c need*/
+#endif
+#ifdef CONFIG_AMD_LV400
+#define PHYS_FLASH_SIZE		0x00080000 /* 512KB */
+#define CONFIG_SYS_MAX_FLASH_SECT	(11)	/* max number of sectors on one chip */
+#define CONFIG_ENV_ADDR		(CONFIG_SYS_FLASH_BASE + 0x070000) /* addr of environment */
 #endif
 
 /* timeout values are in ticks */
 #define CONFIG_SYS_FLASH_ERASE_TOUT	(5*CONFIG_SYS_HZ) /* Timeout for Flash Erase */
 #define CONFIG_SYS_FLASH_WRITE_TOUT	(5*CONFIG_SYS_HZ) /* Timeout for Flash Write */
 
-//#define	CONFIG_ENV_IS_IN_FLASH	1
+#define	CONFIG_ENV_IS_IN_FLASH	1
+
+#ifdef CONFIG_FL2440
+#define PHYS_FLASH_SIZE		0x00400000 /* 4MB */
+
+#define CONFIG_SYS_MONITOR_BASE  TEXT_BASE  /*CMI/flash.c need*/
+#define FLASH_BASE0_PRELIM      PHYS_FLASH_1      /*CMI/flash.c need*/
+#endif
+
 #define CONFIG_ENV_SIZE		0x20000	/* Total Size of Environment Sector */
-#define	CONFIG_ENV_IS_IN_NAND	1
 #define CONFIG_ENV_OFFSET   0x80000
 
 /*JFFS2 support*/
-/*#undef CONFIG_JFFS2_CMDLINE*/
-#if 0
 #define CONFIG_JFFS2_CMDLINE       1    /*when you not use nand legancy*/
 #define CONFIG_JFFS2_NAND          1
 #define CONFIG_JFFS2_DEV           "nand0"
 #define CONFIG_JFFS2_PART_SIZE     0x4c0000
 #define CONFIG_JFFS2_PART_OFFSET   0x40000
 /*JFFS2 support*/
-#endif
+
 /*USB support*/
 #define CONFIG_USB_OHCI
 #define CONFIG_USB_STORAGE
@@ -292,7 +295,5 @@
 
 #define CMD_NAND_YAFFS
 #define CMD_NAND_YAFFS_SKIPFB
-
-#define CONFIG_AMD_LV400	1
 
 #endif	/* __CONFIG_H */
