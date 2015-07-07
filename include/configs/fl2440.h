@@ -42,11 +42,6 @@
 
 #define CONFIG_FL2440_LED 1
 
-#define DEBUG            1
-/*use to run the uboot in sdram*/
-//#define CONFIG_SKIP_LOWLEVEL_INIT   1
-//#define CONFIG_SKIP_RELOCATE_UBOOT  1
-
 /* input clock of PLL */
 #define CONFIG_SYS_CLK_FREQ	12000000/* the SMDK2410 has 12MHz input clock */
 
@@ -54,6 +49,9 @@
 #define USE_920T_MMU		1
 #undef CONFIG_USE_IRQ			/* we don't need IRQ/FIQ stuff */
 
+//#define CONFIG_SKIP_LOWLEVEL_INIT
+#define CONFIG_SKIP_RELOCATE_UBOOT
+#define FL2440_NAND_BOOT
 /*
  * Size of malloc() pool
  */
@@ -120,16 +118,16 @@
 #define CONFIG_MTD_PARTITIONS
 #endif
 
-#if defined(CONFIG_CMD_NAND)
-#define CONFIG_NAND_S3C2410
-#define CONFIG_SYS_MAX_NAND_DEVICE   1     /* Max number of NAND devices        */
-#define NAND_MAX_CHIPS			1
-#define CONFIG_SYS_NAND_BASE 0x4E000000
+#ifdef BOOT_NFS
+#define CONFIG_BOOTARGS     "console=ttySAC0,115200 noinitrd root=/dev/nfs rw nfsroot=192.168.1.2:/home/ilufei/nfs/rootfs ip=192.168.1.4:192.168.1.2:192.168.1.1:255.255.255.0:fl2440:eth0:on"
+#define CONFIG_BOOTCOMMAND	"nfs 0x30008000 192.168.1.2:/home/ilufei/nfs/zImage; bootm 0x30008000"
+#else
+#define CONFIG_BOOTARGS     "console=tty0 console=ttySAC0,115200 noinitrd root=/dev/mtdblock2 rootfstype=yaffs2"
+#define CONFIG_BOOTCOMMAND	"nand read 0x30008000 0x600000 0x210000; bootm 0x30008000"
 #endif
 
-
-#define CONFIG_ETHADDR	08:00:3e:26:0a:5b 
-#define CONFIG_NETMASK          255.255.255.0
+#define CONFIG_ETHADDR		08:00:3e:26:0a:5b 
+#define CONFIG_NETMASK		255.255.255.0
 #define CONFIG_IPADDR		192.168.1.4
 #define CONFIG_SERVERIP		192.168.1.1
 
@@ -141,8 +139,8 @@
 
 #undef MTDIDS_DEFAULT
 #undef MTDPARTS_DEFAULT
-#define MTDIDS_DEFAULT          "nand0=nand"
-#define MTDPARTS_DEFAULT        "mtdparts=nand:1m(u-boot),"				\
+#define MTDIDS_DEFAULT          "nand0=nandflash"
+#define MTDPARTS_DEFAULT        "mtdparts=nandflash:1m(u-boot),"				\
                                 "256k(params),"  								\
                                 "1m(logo),"                                     \
                                 "5m(kernel),"                                   \
@@ -160,7 +158,6 @@
 
 #define CONFIG_SYS_MEMTEST_START	0x30000000	/* memtest works on	*/
 #define CONFIG_SYS_MEMTEST_END		0x33F00000	/* 63 MB in DRAM	*/
-
 
 #define	CONFIG_SYS_LOAD_ADDR		0x30008000	/* default load address	*/
 #define	CONFIG_SYS_HZ			1000
@@ -184,6 +181,49 @@
 #define CONFIG_STACKSIZE_FIQ	(4*1024)	/* FIQ stack */
 #endif
 
+
+//#define CONFIG_MTD_DEBUG
+//#define CONFIG_MTD_DEBUG_VERBOSE 3
+#define CONFIG_NAND_S3C2440
+
+/* NAND configuration */
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#define CONFIG_SYS_NAND_BASE		0x4E000000
+
+#define CONFIG_ENV_IS_IN_NAND
+//#define CONFIG_NAND_ENV_DST		0x30000100
+#define CONFIG_ENV_OFFSET		0x40000
+#define CONFIG_ENV_SIZE		0x10000	/* Total Size of Environment Sector */
+//#define CONFIG_S3C2440_NAND_HWECC
+
+//#define CONFIG_SYS_NAND_SKIP_BAD_DOT_I	1  /* ".i" read skips bad blocks	      */
+
+
+/* NAND chip page size		*/
+#define CONFIG_SYS_NAND_PAGE_SIZE	2048
+/* NAND chip block size		*/
+#define CONFIG_SYS_NAND_BLOCK_SIZE	(128 * 1024)
+/* NAND chip page per block count  */
+#define CONFIG_SYS_NAND_PAGE_COUNT	64
+/* Location of the bad-block label */
+#define CONFIG_SYS_NAND_BAD_BLOCK_POS	0
+/* Extra address cycle for > 128MiB */
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+
+/* Size of the block protected by one OOB (Spare Area in Samsung terminology) */
+#define CONFIG_SYS_NAND_ECCSIZE	CONFIG_SYS_NAND_PAGE_SIZE
+/* Number of ECC bytes per OOB - S3C6400 calculates 4 bytes ECC in 1-bit mode */
+#define CONFIG_SYS_NAND_ECCBYTES	4
+/* Number of ECC-blocks per NAND page */
+#define CONFIG_SYS_NAND_ECCSTEPS	(CONFIG_SYS_NAND_PAGE_SIZE / CONFIG_SYS_NAND_ECCSIZE)
+/* Size of a single OOB region */
+#define CONFIG_SYS_NAND_OOBSIZE	64
+/* Number of ECC bytes per page */
+#define CONFIG_SYS_NAND_ECCTOTAL	(CONFIG_SYS_NAND_ECCBYTES * CONFIG_SYS_NAND_ECCSTEPS)
+/* ECC byte positions */
+#define CONFIG_SYS_NAND_ECCPOS		{40, 41, 42, 43, 44, 45, 46, 47, \
+				 48, 49, 50, 51, 52, 53, 54, 55, \
+				 56, 57, 58, 59, 60, 61, 62, 63}
 /*-----------------------------------------------------------------------
  * Physical Memory Map
  */
@@ -191,42 +231,9 @@
 #define PHYS_SDRAM_1		0x30000000 /* SDRAM Bank #1 */
 #define PHYS_SDRAM_1_SIZE	0x04000000 /* 64 MB */
 
-#define PHYS_FLASH_1		0x08000000 /* Flash Bank #1 */
-
-#define CONFIG_SYS_FLASH_BASE		PHYS_FLASH_1
-
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
-#define CONFIG_AMD_LV400	1	/* uncomment this if you have a LV400 flash */
-
-#define CONFIG_SYS_MAX_FLASH_BANKS	1	/* max number of memory banks */
-#ifdef CONFIG_AMD_LV800
-#define PHYS_FLASH_SIZE		0x00100000 /* 1MB */
-#define CONFIG_SYS_MAX_FLASH_SECT	(19)	/* max number of sectors on one chip */
-#define CONFIG_ENV_ADDR		(CONFIG_SYS_FLASH_BASE + 0x0F0000) /* addr of environment */
-#endif
-#ifdef CONFIG_AMD_LV400
-#define PHYS_FLASH_SIZE		0x00080000 /* 512KB */
-#define CONFIG_SYS_MAX_FLASH_SECT	(11)	/* max number of sectors on one chip */
-#define CONFIG_ENV_ADDR		(CONFIG_SYS_FLASH_BASE + 0x070000) /* addr of environment */
-#endif
-
-/* timeout values are in ticks */
-#define CONFIG_SYS_FLASH_ERASE_TOUT	(5*CONFIG_SYS_HZ) /* Timeout for Flash Erase */
-#define CONFIG_SYS_FLASH_WRITE_TOUT	(5*CONFIG_SYS_HZ) /* Timeout for Flash Write */
-
-#define	CONFIG_ENV_IS_IN_FLASH	1
-
-#ifdef CONFIG_FL2440
-#define PHYS_FLASH_SIZE		0x00400000 /* 4MB */
-
-#define CONFIG_SYS_MONITOR_BASE  TEXT_BASE  /*CMI/flash.c need*/
-#define FLASH_BASE0_PRELIM      PHYS_FLASH_1      /*CMI/flash.c need*/
-#endif
-
-#define CONFIG_ENV_SIZE		0x20000	/* Total Size of Environment Sector */
-#define CONFIG_ENV_OFFSET   0x80000
 
 /*JFFS2 support*/
 #define CONFIG_JFFS2_CMDLINE       1    /*when you not use nand legancy*/
@@ -279,14 +286,6 @@
 #define CONFIG_CMDLINE_TAG          1      
 
 #define CONFIG_BOOTDELAY	5
-#ifdef BOOT_NFS
-#define CONFIG_BOOTARGS     "console=ttySAC0,115200 noinitrd root=/dev/nfs rw nfsroot=192.168.1.2:/home/ilufei/nfs/rootfs ip=192.168.1.4:192.168.1.2:192.168.1.1:255.255.255.0:fl2440:eth0:on"
-#define CONFIG_BOOTCOMMAND	"nfs 0x30008000 192.168.1.2:/home/ilufei/nfs/zImage; bootm 0x30008000"
-#else
-#define CONFIG_BOOTARGS     "console=tty0 console=ttySAC0,115200 noinitrd root=/dev/mtdblock2 rootfstype=yaffs2"
-#define CONFIG_BOOTCOMMAND	"nand read 0x30008000 0x600000 0x210000; bootm 0x30008000"
-#endif
-
 #if DEBUG
 #define CONFIG_MTD_DEBUG  1
 #define CONFIG_MTD_DEBUG_VERBOSE  0
@@ -295,5 +294,9 @@
 
 #define CMD_NAND_YAFFS
 #define CMD_NAND_YAFFS_SKIPFB
+
+#define CONFIG_SYS_NO_FLASH
+#undef CONFIG_CMD_FLASH
+#undef CONFIG_CMD_IMLS
 
 #endif	/* __CONFIG_H */
