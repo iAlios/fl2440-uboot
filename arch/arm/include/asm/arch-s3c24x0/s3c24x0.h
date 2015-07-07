@@ -166,7 +166,7 @@ struct s3c2410_nand {
 
 #if defined(CONFIG_S3C2440)
 /* NAND FLASH (see S3C2440 manual chapter 6) */
-struct s3c2410_nand {
+struct s3c2440_nand {
 	    u32  NFCONF;
         u32  NFCONT;
         u32  NFCMD;

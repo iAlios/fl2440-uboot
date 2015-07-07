@@ -236,6 +236,7 @@ static void nand_select_chip(struct mtd_info *mtd, int chipnr)
 		chip->cmd_ctrl(mtd, NAND_CMD_NONE, 0 | NAND_CTRL_CHANGE);
 		break;
 	case 0:
+		chip->cmd_ctrl(mtd, NAND_CMD_NONE, NAND_NCE | NAND_CTRL_CHANGE);
 		break;
 
 	default:
@@ -2672,6 +2673,9 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 	tmp_manf = chip->read_byte(mtd);
 	tmp_id = chip->read_byte(mtd);
 
+	MTDDEBUG (MTD_DEBUG_LEVEL0, "NAND device: Manufacturer ID:"
+	          " 0x%02x, Chip ID: 0x%02x\n", *maf_id, dev_id);
+
 	if (tmp_manf != *maf_id || tmp_id != dev_id) {
 		printk(KERN_INFO "%s: second ID read did not match "
 		       "%02x,%02x against %02x,%02x\n", __func__,
@@ -2687,15 +2691,8 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 		}
 	}
 
-	if (!type) {
-		/* supress warning if there is no nand */
-		if (*maf_id != 0x00 && *maf_id != 0xff &&
-		    dev_id  != 0x00 && dev_id  != 0xff)
-			printk(KERN_INFO "%s: unknown NAND device: "
-				"Manufacturer ID: 0x%02x, Chip ID: 0x%02x\n",
-				__func__, *maf_id, dev_id);
+	if (!type)
 		return ERR_PTR(-ENODEV);
-	}
 
 	if (!mtd->name)
 		mtd->name = type->name;
