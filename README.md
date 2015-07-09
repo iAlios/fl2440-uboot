@@ -32,6 +32,7 @@ $ make fl2440_config && make
 
   即可编译了。
 
+注意：目前可以支持 jffs2 文件系统
 
 
 
