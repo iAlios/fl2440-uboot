@@ -1,0 +1,26 @@
+<PAGE>
+	<VAR match="VAR_ORIGIN" replace="../" />
+	<VAR match="VAR_CVSID" replace="$Id: jffs3.xml,v 1.2 2005/05/09 08:17:52 havasi Exp $"/>
+	<INCLUDE file="../inc/header.tmpl" />
+
+	<VAR match="VAR_SEL_FAQ" replace="selected" />
+	<VAR match="VAR_SEL_JFFS3" replace="selected" />
+	<PARSE file="../menu1.xml" />
+
+	<INCLUDE file="../inc/content.tmpl" />
+
+<h2>JFFS3 specific</h2>
+
+<h3>What is fs/jffs3 in the MTD CVS repository?</h3>
+<p>This is currently almost the same as JFFS2 + Ferenc Havasi's "summary"
+patch applied. The patch is available seperately 
+<a href="http://www.inf.u-szeged.hu/jffs2/">here</a><br />
+Some other minor improvements have been committed.</p>
+
+<h3>How can I participate in JFFS3 development?</h3>
+<p>You are invited to discuss JFFS3 design issues on the
+<a href="../mail.html">mailing list</a>. You can also join us on
+<a href="../mail.html">IRC</a></p>
+
+	<INCLUDE file="../inc/footer.tmpl" />
+</PAGE>

@@ -1,0 +1,22 @@
+<PAGE>
+	<VAR match="VAR_ORIGIN" replace="../" />
+	<VAR match="VAR_CVSID" replace="$Id: jffs3.xml,v 1.2 2005/03/12 13:54:24 gleixner Exp $"/>
+	<INCLUDE file="../inc/header.tmpl" />
+
+	<VAR match="VAR_SEL_DOC" replace="selected" />
+	<VAR match="VAR_SEL_JFFS3" replace="selected" />
+	<PARSE file="../menu1.xml" />
+
+	<INCLUDE file="../inc/content.tmpl" />
+
+	<h2>JFFS3 (Journalling Flash File System Version 3)</h2>
+	<p>There is some activity to create the third generation of the JFFS file
+	system.</p>
+	<p>We are mainly discussing JFFS3 design issues now.
+	A summary of the discussion is available in the JFFS3 design issues document
+	(<a href="../tech/JFFS3design.pdf">pdf</a>,
+	<a href="../tech/JFFS3design/index.html">html</a>).</p>
+	<p>See also the JFFS3 <a href="../faq/jffs3.html">FAQ Section</a></p>
+		
+	<INCLUDE file="../inc/footer.tmpl" />
+</PAGE>

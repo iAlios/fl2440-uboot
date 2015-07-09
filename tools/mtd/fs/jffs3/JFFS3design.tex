@@ -1,0 +1,1283 @@
+%
+% JFFS3 design issues.
+%
+% Copyright (C) 2005 Artem B. Bityuckiy, dedekind@infradead.org
+%
+% $Id: JFFS3design.tex,v 1.49 2005/04/26 15:18:03 dedekind Exp $
+%
+
+\documentclass[12pt,a4paper,oneside,titlepage]{article}
+\usepackage{hyperref}
+\usepackage{html}
+\usepackage{longtable}
+\textwidth=18cm
+\oddsidemargin=0cm
+\topmargin=0cm
+\textheight=24cm
+
+% Define TODO command
+\newcommand{\TODO}[1]{({\textbf{TODO}: #1})\marginpar{\large \textbf{!?!}}}
+
+\begin{document}
+
+%
+%  TITLE PAGE
+%
+\title{JFFS3 design issues}
+\author{Artem B. Bityuckiy, Thomas Gleixner}
+\maketitle
+
+%
+% ABSTRACT
+%
+\pagestyle{empty}
+\begin{abstract}
+This document discusses various JFFS3 high-level design aspects.
+Additionally, it defines standard JFFS3 dictionary and terms.
+
+The document assumes the reader is familiar with JFFS2 design and has at
+least read David Woodhouse's JFFS2 paper [\ref{ref_JFFSdwmw2}].
+\end{abstract}
+
+%
+% TABLE OF CONTENTS
+%
+\tableofcontents
+\newpage
+
+\pagestyle{plain}
+\pagenumbering{arabic}
+
+\section*{Document status}
+Incomplete, working draft.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% JFFS2 ANALYSIS
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{JFFS2 analysis}
+This section analyzes JFFS2 disadvantages in order to motivate JFFS3
+improvements. 
+
+%
+% Memory consumption
+%
+\subsection{Memory consumption}
+Let's make experiments using an x86 PC host with 64~MiB simulated
+NAND flash (\emph{nandsim} simulator module). In all the experiments below the whole
+flash comprises single partition where JFFS2 filesystem is put.
+
+\begin{description}
+\item[Experiment 1]
+Fulfill the JFFS2 file system with a typical Linux root FS, namely
+\texttt{/bin}, \texttt{/sbin}, \texttt{/etc}, \texttt{/boot} and
+partially \texttt{/usr} from the x86 Fedora Core 2 distribution.
+
+We observed the following.
+The total files number was 4372 -- 719 directories and 2995 regular
+files (all the files' nodes were made pristine, i.e.,
+\texttt{PAGE\_SIZE} bytes in length).
+The summary size of the all files was 116~MiB (compression was enabled).
+
+The memory consumed by JFFS2 was distributed over its internal objects
+as follows.
+
+\begin{center}
+\begin{tabular}{ll}
+jffs2\_node\_ref    & 658 KiB \\
+jffs2\_node\_frag   & 913 KiB \\
+jffs2\_full\_dnode  & 545 KiB \\
+jffs2\_full\_dirent & 102 KiB \\
+\hline
+total               & 2.2 MiB
+\end{tabular}
+\end{center}
+
+Note, that all the inodes were in the Linux Inode Cache in our experiment,
+which isn't that typical
+for the real-life system though. If no inodes were in the Inode Cache,
+only 658~KiB would be consumed by the \texttt{jffs2\_node\_ref}
+objects. However, opening any
+file or looking up in any directory would require additional RAM.
+
+\item[Experiment 2]
+The following command on the same empty 64~MiB JFFS2 file
+system
+\begin{quote}
+\texttt{dd if=/dev/urandom of=/mnt/jffs\_mnt/file bs=512}
+\end{quote}
+gave the following results:
+
+\begin{center}
+\begin{tabular}{ll}
+jffs2\_node\_ref    & 1778 KiB \\
+jffs2\_node\_frag   & 3111 KiB \\
+jffs2\_full\_dnode  & 1777 KiB \\
+\hline
+total               & 6.7 MiB
+\end{tabular}
+\end{center}
+
+\item[Experiment 3]
+The following command on the same empty 64~MiB JFFS2 file
+system
+\begin{quote}
+\texttt{dd if=/dev/urandom of=/mnt/jffs\_mnt/file bs=10}
+\end{quote}
+gave:
+
+\begin{center}
+\begin{tabular}{ll}
+jffs2\_node\_ref    & 12706 KiB \\
+jffs2\_node\_frag   & 22200 KiB \\
+jffs2\_full\_dnode  & 12686 KiB \\
+\hline
+total               & 47.6 MiB
+\end{tabular}
+\end{center}
+
+It is worth noting here, that in JFFS2 memory which is consumed even
+when no files are opened is called \emph{\mbox{in-core} memory}.
+\mbox{In-core} memory mostly consists of \texttt{jffs2\_node\_ref} objects.
+\end{description}
+
+Assuming the amount of consumed memory grows linearly with the flash size
+(which I believe is true) we'd have the following numbers for an 1GB flash
+in similar experiments.
+
+\begin{description}
+\item[Experiment 1a (imaginary)]~
+\begin{center}
+\begin{tabular}{ll}
+jffs2\_node\_ref    & 10.3 MiB \\
+jffs2\_node\_frag   & 14.3 MiB \\
+jffs2\_full\_dnode  & 8.5 MiB \\
+jffs2\_full\_dirent & 1.6 MiB \\
+\hline
+total               & 34.7 MiB
+\end{tabular}
+\end{center}
+
+\item[Experiment 2a (imaginary)]~
+\begin{center}
+\begin{tabular}{ll}
+jffs2\_node\_ref    & 27.8 MiB \\
+jffs2\_node\_frag   & 48.6 MiB \\
+jffs2\_full\_dnode  & 27.8 MiB \\
+\hline
+total               & 104.2 MiB
+\end{tabular}
+\end{center}
+
+\item[Experiment 3a (imaginary)]~
+\begin{center}
+\begin{tabular}{ll}
+jffs2\_node\_ref    & 198.5 MiB \\
+jffs2\_node\_frag   & 346.9 MiB \\
+jffs2\_full\_dnode  & 198.2 MiB \\
+\hline
+total               & 743.6 MiB
+\end{tabular}
+\end{center}
+\end{description}
+
+Needless to note that this is unacceptable for embedded systems.
+
+The following memory consumption problems are distinguished.
+\begin{description}
+\item[In-core RAM.] 
+Due to the design JFFS2 needs to refer each node associating a
+small RAM object with it resulting in substantial RAM consumption. The
+amount of \mbox{in-core} RAM depends linearly on the amount of information on
+the flash. More data are put to the FS, more RAM JFFS2 takes.
+
+\item[Inode build RAM.] And again, due to JFFS2 design built inodes (those who
+are in the Inode Cache, which happens when, say, when a file is opened or
+a directory is browsed) consume a lot of RAM. For regular files JFFS2 needs to
+store in RAM fragment trees (\texttt{jffs2\_node\_frag} and
+\texttt{jffs2\_full\_dnode} objects) and for directories -- children
+lists (\texttt{jffs2\_full\_dirent} objects). Larger file is opened, more
+RAM is require for its fragtree. Larger directory (i.e., more directory
+entries in it) is browsed, more RAM is needed.
+
+\item[Peak RAM usage.] The JFFS2 memory consumption also depends on how data is
+written. Each transaction goes directly to flash (through the
+\mbox{write-buffer} for \mbox{page-based} flashes like NAND), i.e., there is
+\mbox{Write-Through} cache in Linux/JFFS2. Consequently, small transactions
+result in a great deal of small nodes on flash and hence, much memory is required,
+for \mbox{in-core} objects and fragtree. Later small nodes will be merged by
+GC (maximum \texttt{PAGE\_SIZE} bytes of a files' data may be stored in
+one node) and the amount of consumed memory will be much lower. But the peak
+JFFS2 memory usage is very high.
+\end{description}
+
+%
+% Mount time
+%
+\subsection{Mount time}
+The slow mount is the most prominent and upsetting JFFS2 feature. The
+reason is, again, the JFFS2 design which doesn't assume any definite
+structure on the flash media but instead, makes use of one big log made
+up of nodes -- the only JFFS2 \mbox{on-flash} data structure. 
+But unfortunately, there are several drawbacks, for example -- slow mount.
+Because of absence of any flash structure, JFFS2 needs to scan the whole
+flash partition to identify all nodes and to build the file system map. This
+takes much time, especially on large flash partitions.
+
+To increase the mount speed JFFS2 performs as few work as possible during
+the mount process and defers
+a considerable amount of work to the GC thread. The GC thread
+works in background (this process is called "checking" in JFFS2 as it
+mostly check nodes' CRC checksums, albeit it also discovers obsolete
+nodes building temporary fragment trees and direntry lists). And the
+important thing is that during this checking process GC can not proceed and in
+many cases no one could write to
+the file system, only read operations aren't forbidden. This is an
+additional \mbox{cumber-stone}.
+
+Thus, there are following mount problems in JFFS2:
+\begin{description}
+\item[Slow mount.] To mount the file system JFFS2 scans the whole partition in
+order to recognize nodes, build \mbox{per-block} and \mbox{per-inode} nodes lists, etc.
+\item[Unpleasant checking.] Just after mount JFFS2 checks all the
+inodes which results in flash \mbox{re-reading}, eats a lot of CPU cycles and may block
+writers for a considerable time interval. 
+\end{description}
+
+\TODO{show some real numbers here}
+
+The first problem may be solved by a patch referred to as a "summary patch" and
+accessible at \url{http://www.inf.u-szeged.hu/jffs2/}.
+
+%
+% Inode build
+%
+\subsection{Inode build}
+One more JFFS2 problem is the slow inode build (\texttt{iget()} VFS call)
+implementation for both regular files and directories. Users typically start
+feeling uncomfortable starting from file sizes of about 32~MiB (this is highly
+dependent on how the file was written, i.e., how many nodes correspond to the
+file).
+
+Thus, there is one more problem with JFFS2:
+\begin{description}
+\item[Slow inode build.] The inode build process implies that JFFS2 walks
+through all the inode's nodes
+(which are data nodes for regular file and direntries for directory),
+reads the nodes, checks their CRC and builds fragtree/dirent list. And the inode
+build time is the linear function of the nodes number.
+\end{description}
+
+\TODO{provide some real numbers here}
+
+\subsection{Conclusion}
+Historically, JFFS2 was designed for small NOR flash chips and didn't even
+support NAND, whose support was added later. The JFFS2 is perfectly good for
+small flashes, and has such nice characteristics as:
+
+\begin{itemize}
+\item very economical flash usage -- data usually takes as much flash
+space as it actually need, without wasting much space as in case of
+"traditional" file systems for block devices;
+\item admitting of very efficient utilizing of "on-flight" compression which
+allows to fit a big deal of data to flash;
+\item quick read and write operations;
+\item natural unclean reboot robustness;
+\item good wear-leveling.
+\end{itemize}
+
+But unfortunately, it has one big drawback - bad scalability. Namely, mount
+time, memory consumption and inode build time are liner functions of the
+amount of the stored data.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% JFFS3 GOALS AND REQUIREMENTS
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{JFFS3 goals and requirements}
+The following is somewhat unstructured list of JFFS2 goals and requirements.
+
+\begin{enumerate}
+\item Fully POSIX-compatible file system.
+\item The main OS is Linux. \TODO{nonetheless portable?}
+\item Good scalability.
+\item Preserve the possibility to efficiently use compression (like in JFFS2).
+\item Provide good wear-leveling.
+\item Tolerant to unclean reboots.
+\item Fast mounting.
+\item Reasonably low memory consumption.
+\item Fast enough read/write operations.
+\item Support different flash types (NOR, NAND, etc).
+\item Support xattr.
+\end{enumerate}
+
+Of course there are a number of tradeoffs and we should find a balanced compromise
+solution.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% CHECKPOINTS
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Checkpoints}
+A checkpoint (CP) is new node type which serves to accumulate all
+information about an inode which is required to efficiently read and
+write to files create/remove direntries in directories. The following
+types of checkpoints are defined:
+
+\begin{itemize}
+\item file checkpoints which are associated with regular file inodes;
+\item directory checkpoints which are associated with directory inodes.
+\end{itemize}
+
+%
+% File checkpoints
+%
+\subsection{File checkpoints}
+File checkpoints (FCP):
+\begin{itemize}
+\item are associated with regular file inodes;
+\item refer all the valid data nodes of the file;
+\item play the role of JFFS2 fragment trees, i.e., allow to quickly locate
+positions of data nodes for any given file data range.
+\end{itemize}
+
+Each regular file inode is associated with one or more
+checkpoints. The number of the associated FCP depends on the file size.
+Small files have only one correspondent FCP, large files may have many
+associated checkpoints.
+
+Each FCP corresponds to a fixed data range of the file, and
+this range is called \emph{FCP range} or $R_{FCP}$.
+The idea behind such a splitting is to facilitate:
+\begin{itemize}
+\item fast GC and file change operations -- we update only one or few FCP nodes if
+a large file is changed or one of its nodes are Garbage Collected;
+\item memory consumption optimization -- JFFS3 doesn't need to keep in-core
+the FCP ranges;
+\item FCP creation optimization -- FCP entries are sorted in FCP and
+it is faster to sort short arrays rather then long.
+\end{itemize}
+
+The data structure corresponding to FCP is:
+\begin{verbatim}
+struct jffs3_raw_fcp
+{
+  uint16_t magic;   /* Magic bitmask of FCP node. */
+  uint64_t version; /* Helps to differentiate between valid
+  uint16_t index;   /* The FCP index. Gives FCP range offset
+                       if multiplied by the FCP range. */
+                       and obsolete file checkpoints. */
+  uint32_t hdr_crc; /* FCP Header CRC32 checksum. */
+  uint32_t crc;     /* FCP payload CRC32 checksum. */
+
+  /* An array of references to data nodes corresponding to
+   * FCP. The array is sorted by the node range offset in
+   * ascending order. */
+  struct jffs3_fcp_entry entries[];
+} __attribute__((packed));
+
+struct jffs3_raw_fcp_entry
+{
+  uint32_t phys_offs; /* The position of the node on flash. */
+  uint32_t offs;      /* Offset of the data range the node refers. */
+  uint16_t len;       /* The length of the node data range. */
+} __attribute__((packed));
+\end{verbatim}
+
+The value of the FCP range $R_{FCP}$ depends on various aspects:
+\begin{description} 
+\item[Memory consumption.] JFFS3 ought to keep in-core FCP references
+and it is clear then the larger is $R_{FCP}$ the less is memory
+consumption. To facilitate good scalability $R_{FCP}$ must grow with growing
+flash size. Nonetheless, this will make troubles when moving an JFFS3
+image from small flash to large.
+
+From the other hand, very large $R_{FCP}$ implies large physical
+FCP nodes size and slower FCP updates.
+
+\item[RAM page size.] Obviously $R_{FCP}$ must be multiple of
+\texttt{PAGE\_SIZE}, and to facilitate JFFS3 portability in the case of
+removable devices, we should
+make it multiple of the largest \texttt{PAGE\_SIZE}
+used in Linux our days (64 KiB). 4 KiB should be regarded as the smallest possible
+RAM page size.
+
+\item[FCP node size.] FCP node physical size shouldn't be
+neither too large nor too small. To facilitate faster FCP update on NAND
+flashes the maximum FCP node physical size ($S_{FCP}$) should be one
+flash page (or less).
+
+Since one FCP entry takes 10 bytes, the FCP node header takes 20 bytes
+the maximum number of FCP entries $E_{FCP}$ will be:
+\begin{center}
+\begin{tabular}{ll}
+\textbf{Flash page size} & $\bf E_{FCP}$ \\
+\hline
+512 bytes  & 49\\
+2048 bytes & 202\\
+4096 bytes & 407\\
+\end{tabular}
+\end{center}
+
+\item[Largest data node size.] To gain the write performance JFFS3 should be
+able to write non-pristine nodes, i.e., nodes of
+\mbox{size < \texttt{PAGE\_SIZE}}. In order to allow filling the FCP range by
+non-pristine nodes the following should be true:
+$$R_{FCP} > \mathtt{PAGE\_SIZE}{\cdot}E_{FCP},$$
+where $E_{FCP}$ is the
+maximal number of FCP entries in FCP. The table below illustrates
+the average data node range size depending on $R$ and flash page size.
+
+512 bytes flash page:
+\begin{center}
+\begin{tabular}{ll}
+$\bf R_{FCP}$ & \textbf{Average $\bf R_{data}$}\\
+\hline
+64 KiB  & 1.3 KiB\\
+128 KiB & 2.7 KiB\\
+\end{tabular}
+\end{center}
+
+2048 bytes flash page:
+\begin{center}
+\begin{tabular}{ll}
+$\bf R_{FCP}$ & \textbf{Average $\bf R_{data}$}\\
+\hline
+128 KiB & 650 bytes\\
+256 KiB & 1.3 KiB\\
+512 KiB & 2.6 KiB\\
+\end{tabular}
+\end{center}
+
+4096 bytes flash page:
+\begin{center}
+\begin{tabular}{ll}
+$\bf R_{FCP}$ & \textbf{Average $\bf R_{data}$}\\
+\hline
+256 KiB & 642 bytes\\
+512 KiB & 1.3 KiB\\
+1 MiB   & 2.6 KiB\\
+\end{tabular}
+\end{center}
+
+The above tables assumes that each FCP entry may at most refer 4~KiB of data.
+
+For NOR and other non-paged flashes JFFS3 just assumes that
+the flash page size is virtually 512 bytes or larger, depending on the
+flash size.
+\end{description}
+
+If we keep in-core references of all the FCP nodes of a file, we may
+waste a lot of RAM. Even assuming that each reference takes 4~bytes
+(which is in fact unreachably few) we have:
+\begin{center}
+\begin{tabular}{lllll}
+\textbf{File size} & \textbf{Flash Page size} &
+$\bf R_{FCP}$ & \textbf{RAM required} &
+\textbf{Flash overhead}\\
+\hline
+64 MiB  & 512 bytes  & 128 KiB & 2 MiB  & 256 KiB (0.4\%)\\
+1 GiB   & 2048 bytes & 512 KiB & 8 MiB  & 4 MiB (0.4\%)\\
+4 GiB   & 4096 bytes & 1 MiB   & 16 MiB & 8 MiB (0.4\%)\\
+\end{tabular}
+\end{center}
+
+The above table also shows the amount of flash space required to store
+FCP nodes (assuming each FCP entry takes the whole flash page).
+
+To relax RAM usage JFFS3 makes use of \emph{second level file
+checkpoints} (FCP2) referring
+the level one file checkpoints of the file similarly to how FCP refers
+data nodes. The following requirements are to be met for FCP2:
+
+\begin{itemize}
+\item FCP2 range $R_{FCP2}$ is multiple of FCP range $R_{FCP}$;
+\item the largest FCP2 node physical size $S_{FCP2}$ is limited by the
+Flash page size;
+\end{itemize}
+
+With FCP2 the above table looks as:
+\begin{center}
+\begin{tabular}{lllll}
+\textbf{File size} & \textbf{Flash Page size} &
+$\bf R_{FCP}$ & $\bf R_{FCP2}$
+& \textbf{RAM required}\\
+\hline
+64 MiB  & 512 bytes  & 256 KiB & 8 MiB   & 32 bytes\\
+1 GiB   & 2048 bytes & 1 MiB   & 128 MiB & 32 bytes\\
+4 GiB   & 4096 bytes & 1 MiB   & 256 MiB & 64 bytes\\
+\end{tabular}
+\end{center}
+
+Beside $R_{FCP2}$, JFFS3 defines one more constant $R_{FCP2}^{min}$
+denoting the minimal size of file which can have an
+associated FCP2 node.
+
+%
+% Directory checkpoints
+%
+\subsection{Directory checkpoints}
+Directory checkpoints (DCP):
+\begin{itemize}
+\item are associated with directory inodes;
+\item refer all the valid directory entries of the directory;
+\item allow to quickly find the directory entry nodes by their names.
+\end{itemize}
+
+The DCP data structure looks as follows.
+
+\begin{verbatim}
+struct jffs3_raw_dcp
+{
+  uint16_t magic;   /* Magic bitmask of DCP node. */
+  uint64_t version; /* Helps to differentiate between valid
+                       and obsolete directory checkpoints. */
+  uint32_t hstart;  /* Starting value of the DCP hash diapason. */
+  uint32_t hend;    /* Ending value of the DCP hash diapason. */
+  uint32_t hdr_crc; /* DCP Header CRC32 checksum. */
+  uint32_t crc;     /* DCP payload CRC32 checksum. */
+  
+  /* An array of references to direntry nodes corresponding to
+   * DCP. The array is sorted by the direntry name hash value
+   * in ascending order. */
+  struct jffs3_dcp_entry entries[];
+} __attribute__((packed));
+
+struct jffs3_dcp_entry
+{
+  uint32_t hash;
+  uint32_t offs;
+} __attribute__((packed));
+\end{verbatim}
+
+To split large DCP on several nodes JFFS3 makes use of hash function
+$H$ mapping directory entry names to 32-bit integers. In case of good
+$H$ the probability of name collisions will be $1/2^{32}$.
+
+It makes sense to use CRC32 as the hash function due to the following
+reasons:
+\begin{itemize}
+\item CRC32 is certanly good hash function;
+\item directory entry names on flash are protected by CRC32 and we
+would calculate CRC32 anyway when we write the directory entry.
+\end{itemize}
+
+To refer Directory checkpoints JFFS3 ought to keep in-core:
+\begin{itemize}
+\item DCP offset on flash;
+\item Starting hash diapason value;
+\item Ending hash diapason value;
+\end{itemize}
+
+To find DCP which refers the direntry node with a given name JFFS3
+performs the following steps:
+\begin{itemize}
+\item calculates the hash value of the given name;
+\item looks for DCP with the hash diapason that includes the calculated
+hash value;
+\item reads the DCP node and finds out the directory entry node offset;
+\item reads the direntry node.
+\end{itemize}
+
+Unlike FCP, directory checkpoints do not have any criteria to split them
+on a fixed basis. Instead, DCP may refer any hash diapason, starting
+from \mbox{\texttt{0x00000000}-\texttt{0xFFFFFFFF}} and ending with a
+diapason including only one hash value (if there are too many
+hash collisions). This means that JFFS3 dynamically splits and merges
+DCP diapasons when new direntries are created and old direntries are
+deleted or changed.
+
+The following constants are defined for directory checkpoints:
+\begin{enumerate}
+\item $E_{DCP}^{min}$ - the minimal number of DCP entries DCP may
+refer;
+\item $E_{DCP}^{max}$ - the maximal number of DCP entries DCP may refer;
+\end{enumerate}
+
+DCP nodes physical size is restricted by the flash page size. Hence,
+assuming $E_{DCP}^{min} = E_{DCP}^{max}/3$,
+$E_{DCP}^{min}$ and $E_{DCP}^{max}$ for different flash page sizes are:
+
+\begin{center}
+\begin{tabular}{lll}
+\textbf{Flash page size} & $\bf E_{DCP}^{min}$ & $\bf E_{DCP}^{max}$\\
+\hline
+512 bytes  & 20  & 60\\
+2048 bytes & 84  & 252\\
+4096 bytes & 169 & 508\\
+\end{tabular}
+\end{center}
+
+The JFFS3 DCP merging/splitting algorithm works as follows:
+\begin{itemize}
+\item as long as there are few direntries in directory (i.e less then
+$E_{DCP}^{max}$), JFFS3 maintains only on DCP comprising whole
+\mbox{32-bit} hash diapason;
+
+\item when more direntries are added, JFFS3 creates more directory
+checkpoints splitting the hash diapason;
+
+\item JFFS3 inserts direntries to DCP with the correspondent hash
+diapason; when the number of associated direntries of the DCP becomes
+too large (i.e., greater then $E_{DCP}^{max}$), the DCP is split on two
+directory checkpoints and the hash diapason is split correspondingly;
+
+\item when directory entries are deleted the DCP which correspond to
+their diapasons becomes smaller; when DCP becomes too small (i.e., the
+number of direntry nodes it refers becomes less then $E_{DCP}^{min}$)
+JFFS3 either merges it with one of small neighbors or splits one of the
+neighbors and then merges the two adjacent small diapasons.
+\end{itemize}
+
+When several direntries have the colliding $H$ values, JFFS3 puts them
+to the same diaposon. If the number of colliding direntries becomes
+equvalent to $E_{DCP}^{max}$, JFFS3 will refuse adding one more direntry
+with the colliding hash value. This implies there is a restriction on the number
+of direntries in a directory.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% VIRTUAL BLOCK HANDLING
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Virtual Block handling}
+To reduce memory consumption for block references JFFS3 can
+concatenate several physical erase blocks into a virtual erase block.
+
+Virtual erase blocks have also disadvantages. The bigger size affects
+garbage collection as larger entities have to be handled, which
+degrades GC efficiency and performance.
+
+In order to keep accounting simple the number of concatenated blocks
+must be a power of two.
+
+The concatenation must be configurable by the user.
+
+The concatenation of physical blocks to virtual blocks must deal with
+bad blocks in the virtual block rather than treating the whole virtual
+block as bad as it is currently done in JFFS2. Therefor JFFS3 must treat the
+physical blocks inside a virtual block separately. This implies the
+clean marker write per physical block after erase and the limitation
+of writes to physical block boundaries.
+
+A nice benefit is that this keeps the File System compatible for different
+concatenation settings in case of removable media.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% WEAR LEVELLING
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Wear Leveling}
+JFFS2's wear spread is of random nature. On filesystems with
+unchanged files the wear almost never touches blocks which contain
+solely unchanged data. This should be addressed in JFFS3.
+
+When a block has been erased a clean marker is written. The clean
+markers carry block erase count information. In case of powerloss the
+erase count information is lost and set to the average erasecount of
+the partition on remount. Userspace tools (e.g. \texttt{flash\_eraseall})
+should be made aware of this, if the wear information has to be preserved.
+
+The wear algorithm enqueues blocks into hash arrays depending on the
+erase count, so we can pick them easily. We have two arrays:
+
+\begin{itemize}
+\item \texttt{struct list\_head *free\_blocks[HASH\_SIZE];}
+\item \texttt{struct list\_head *used\_blocks[HASH\_SIZE];}
+\end{itemize}
+
+For the current max. chipsizes we have max. 32678 blocks / chip. An
+\texttt{HASH\_SIZE} of 256 is assumed for now. The wear leveling makes it
+necessary to enqueue the blocks in order into the hash array. This
+sounds complicated and time consuming, but it is not.
+
+The maximum guaranteed erase cycles for NAND and NOR are ~ 100K at the
+moment. A best case maximum of 256K is assumed and the hash index is
+built by shifting the erase count 10 times right and putting the block
+at the end of the hash entry list. So the variance of the erase counts
+in one entry is max. 1024, which is reasonable. This enqueueing makes
+it possible to pick blocks with static unchanged data for garbage
+collection on purpose to bring the blocks back into use. The garbage
+collection in such a case is simply copying the whole block to a block
+from the free list. Newer NAND Flash supports on chip page
+copying. This feature should be made available in the MTD Kernel API
+to enhance performance of such operations.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% BLOCK REFERENCE
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Blocks reference}
+
+The JFFS2 block accounting variables (see [\ref{ref_JFFS2_blk_ref}])
+can mostly go away. The information can be held in one variable, if it
+is stored depending on the block state. The possibility to have
+accounting control via the distinct variables could be kept for
+debugging purposes, but not for production use.
+
+It's not necessary to hold the garbage collectors current node
+reference (\texttt{gc\_node} JFFS2's field) in the block reference
+structure. The garbage collector recycles only one block at a time, so
+this is an information which can be held in the garbage collector or
+in the global file system data if other parts must have access to it.
+
+The first/last node pointers should be reduced to one. This depends on the
+final node reference design, check pointing, summary nodes etc.
+
+\begin{verbatim}
+struct jffs2_eraseblock
+{
+  list_head *list;
+  node_ref *node;
+  /* Status bits and accounting dependent on state */
+  u32 status; 
+}
+\end{verbatim}
+
+The status variable should be sufficient for holding all required
+information.\\
+
+\begin{tabular}{ll}
+Bi  0-23  & Size information depending on state\\
+Bit 24-31 & Status information\\
+\end{tabular}\\
+
+Reserving 24 bits for accounting should be sufficient for quite a time 
+($2^23 = 8388608$). This is equivalent to 128 blocks of 64KiB physical size.
+On a 32 bit machine this results in 16 bytes/block.\\
+
+\begin{tabular}{llllll}
+Block size (KiB) & 4    & 16   & 64  & 128 & 256\\
+RAM (bytes/MiB)  & 4096 & 1024 & 256 & 128 &  64\\
+RAM (KiB/GiB)    & 4096 & 1024 & 256 & 128 &  64\\
+\end{tabular}\\[8pt]
+
+\begin{tabular}{ll}
+AG-AND 128MB 4k block size & 512 kiB\\
+NAND 512MB 16k block size  & 512 kiB\\
+NAND 2GiB 64k block size   & 512 kiB\\
+\end{tabular}\\
+
+This is 4 times the size of the current limit. It can be cut down
+below 128K by concatenating of 4 physical blocks to a virtual
+block. The above mentioned disadvantages of virtual blocks still
+apply, but degraded by factor 4. The concatenation should be made
+selectable by the user to scale the system according to the
+requirements. See the paragraph about virtual erase blocks.
+
+Using JFFS2 concatenation of 16 blocks would reduce the RAM
+requirement to 32KiB for the largest devices.
+
+\subsection{JFFS2 blocks reference} \label{ref_JFFS2_blk_ref}
+The virtual block data structure is way too big in JFFS2.
+JFFS2 uses 48 bytes per block:\\
+
+\begin{tabular}{llllll}
+Block size (KiB) & 4	 & 16   & 64  & 128 & 256 \\
+RAM (bytes/MiB)  & 12288 & 3072 & 768 & 384 & 192 \\
+RAM (KiB/GiB)    & 12288 & 3072 & 768 & 384 & 192 \\
+\end{tabular}\\
+
+This results in impressive numbers for the largest chips:\\
+
+\begin{tabular}{ll}
+AG-AND 128MB 4k block & 1.5 MiB \\
+NAND 512MB 16k block  & 1.5 MiB \\
+NAND 2GiB 64k block   & 1.5 MiB \\
+\end{tabular}\\
+
+JFFS2 limits the memory consumption to 128K by building virtual
+blocks. This results in 12 blocks per virtual block,
+which are rounded up to 16 to utilize $2^n$ operations.
+
+The current JFFS2 erase block structure is defined as follows:
+
+\begin{verbatim}
+struct jffs2_eraseblock
+{
+  struct list_head list;
+  int bad_count;
+  uint32_t offset; /* of this block in the MTD */
+  uint32_t unchecked_size;
+  uint32_t used_size;
+  uint32_t dirty_size;
+  uint32_t wasted_size;
+  uint32_t free_size;
+  struct jffs2_raw_node_ref *first_node;
+  struct jffs2_raw_node_ref *last_node;
+  /* Next node to be garbage collected */
+  struct jffs2_raw_node_ref *gc_node; 
+};
+\end{verbatim}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% CHECKSUM
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Checksum}
+Any data (including actual file content and internal JFFS3 data) stored within
+JFFS3 file-system is protected by checksum. Nothing is stored on the flash media
+without checksum.
+
+Checksums are destined to detect errors caused by wearing, BB appearance
+or external factors (radiation, abnormal temperatures and the
+like). Errors fall into the following categories.
+
+\begin{itemize}
+\item \emph{Permanent} error is an error which stays after the corresponding block has
+been erased.
+
+\item \emph{Occasional} error is an error which becomes fixed after the corresponding
+block has been erased.
+\end{itemize}
+
+Different flash technologies imply different reliability. The following
+is a brief overview of Flash technologies in this perspective.
+
+\begin{itemize}
+\item \emph{NOR}
+flash is the most trustworthy type of flashes which doesn't admit of permanent
+errors. Any permanent error is critical and means that the chip is not workable anymore.
+Nevertheless, some kinds of NOR flash are not avoid of very rare bit flipping
+events and the use of checksum still might make sense here.
+
+\item \emph{DataFlash} is based on NOR technology and inherits its properties.
+[\ref{ref_AtmelDataFlash}].
+
+\item \emph{ECC NOR} may be regarded as not very robust NOR flash plus extra ECC
+protection.
+
+\item \emph{NAND} flash is not so reliable as NOR and it admits of permanent errors, let
+alone occasional ones which are also possible. The NAND technology itself
+implies bad blocks may dynamically appear during its utilization, albeit this is
+rather rare event [\ref{ref_NANDMTD}, \ref{ref_ToshibaNAND}].
+
+\item \emph{OneNAND} is based on NAND technology and has similar properties
+[\ref{ref_SamsungOneNAND}].
+
+\item \emph{AND} (\emph{AG-AND} and \emph{SuperAND}),
+like NAND technology, implies bad blocks either factory marked
+or dynamically found [\ref{ref_RenesasAND}].
+\end{itemize}
+
+%
+% Checksum modes
+%
+\subsection{Checksum modes}
+Because of a significant disparity in the reliability between different types of
+flashes JFFS3 might operate in either of the following modes.
+
+\begin{enumerate}
+\item \emph{Strict mode} -- checksums are always verified i.e. anything JFFS2
+reads from the flash is validated by checksum. This is safest operation mode and
+should probably always be enabled by default at least with NAND/AND flashes.
+
+\item \emph{Relaxed mode} -- data checksums are not ever being checked, i.e
+JFFS3 still checks node headers and other internal data but doesn't check actual
+file's content. This is dangerous working mode and may probably only be enabled
+by default when JFFS3 works on top of NOR flash.
+\end{enumerate}
+
+Both of the above mentioned operation modes imply that JFFS3 calculates and
+saves checksums when it is performing write operations.
+
+If the underlying flash makes use of ECC (e.g., NAND), and JFFS3 has been
+reported ECC error, JFFS3 checks the corresponding data that had been read.
+
+The checksum mode might be set on the per file basis with
+help of the corresponding extended attribute. In this case the extended
+attribute overrides the default mode. This is very handy mechanism
+whereby users might, for example, disable the checking of multimedia
+file's content.
+
+%
+% Checksum and unclean reboots
+%
+\subsection{Checksum and unclean reboots}
+Unlike JFFS2, JFFS3 does not utilize checksum to detect unclean reboots, albeit
+might do this. The primary aim of checksum is to prevent problems
+related to physical media corruptions. Unclean reboots are substantially
+detected by means of summary nodes. This property makes it possible to distinct
+between checksum errors caused by media problems and by unclean reboots.
+
+%
+% Checksum errors
+%
+\subsection{Checksum errors}
+If a checksum error has been found and if it has not been caused by
+an unclean reboot, JFFS3 behaves as follows.
+
+\begin{enumerate}
+\item Reports the fact of the checksum error.
+
+\item Takes an attempt to recover the erroneous node. 
+Ignores the erroneous node (possibly, marking it obsolete) irrespective
+of the recovery procedure result (success or failure).
+
+\item Locks the inode to whom the erroneous node belongs. Namely,
+rejects any further access to the inode. This might be implementing by
+means of setting the relating extended attribute. JFFS3
+must not reject xattr operation whereby user might clean the
+attribute that locks the inode.
+
+\item Returns an error if the operation was being done on behalf of an
+user process (not Garbage Collector). Otherwise, let the GC to carry on.
+\end{enumerate}
+
+%
+% Checksum error recovery
+%
+\subsubsection{Checksum error recovery}
+The recovery procedure
+has not been designed so far and probably we may postpone this work as
+unimportant although it should be kept in mind during JFFS3
+implementation.
+
+Conceivably, JFFS3 might try to find an older obsolete node
+containing the corrupted information as well as to reconstruct the
+corrupted data using the corresponding in-memory data if it is present.
+The recovery is especially important in case of corrupted direntry node
+as if we just ignore it we might loose the whole file or directory with
+children.
+
+%
+% Miscellaneous
+%
+\subsection{Miscellaneous}
+Like JFFS2, JFFS3 makes use of CRC32 checksum algorithm with the start seed
+0xFFFFFFFF.
+
+If zlib library is used to compress node's data it is worth asking zlib not to
+generate redundant adler32 checksum for better performance.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% MAXIMAL SIZE OF THE INODE NODE DATA
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Maximal size of the inode node data}
+It is proposed to enlarge the maximal data node size to effect several
+enhancements (see \ref{ref_BackgroundInformation} for more details).
+
+JFFS3's maximal data size is multiple of \texttt{PAGE\_SIZE}. As a
+first measure 4-8 memory pages seems to be a sane amount, although
+this depends on several aspects:
+
+\begin{itemize}
+\item The physical block size. Nodes must not exceed the physical block size 
+to allow the configurable selection of block concatenation in virtual blocks.
+
+\item Nodes can not be written over physical block boundaries.
+
+\item read latency - large nodes may lead to substantial read latency
+since JFFS3 will need to read and uncompress more information at once.
+\end{itemize}
+
+Consequently, the maximal size of the data node's data has to be configurable.
+
+To facilitate efficient data node reading we propose to use the method which is
+exploited by ZISOFS filesystem. Basically, the idea is to read not exactly one
+page in the \texttt{read\_page()} operation, but more pages thus propagating the
+Page Cache. By other words, if the data node being read contains several RAM
+pages of data we might read them all into the Page Cache at once. With this we
+will still have good read performance since we don't need to introduce
+additional intermediate buffers.
+
+%
+% Background information
+%
+\subsection{Background information} \label{ref_BackgroundInformation}
+JFFS2 limits the maximal size of the inode node data to the size of the
+RAM page that is often 4KiB. To put it differently, JFFS2 looks at the 
+\texttt{PAGE\_SIZE} constant to determine the maximal size of the inode
+node data.
+
+JFFS2 inode node's data doesn't have to be 4KiB -- it might
+have fewer bytes. In fact, all the user write operations go directly to
+flash as JFFS2 doesn't cache them (JFFS2 has write-through cache).
+Hence, the size of inode node data is affected by user-space
+programs which issue actual write operations.
+
+According to the size of data, all the inode nodes in JFFS2 fall into
+two types:
+
+\begin{itemize}
+\item \emph{pristine nodes} -- which carry \texttt{PAGE\_SIZE} bytes of
+uncompressed data;
+
+\item \emph{non-pristine nodes} -- which carry less data.
+\end{itemize}
+
+Originally most data nodes are non-pristine, but GC merges them
+producing pristine nodes. This work coincides with actual garbage
+collection and might be regarded as an ancillary albeit important
+optimization activity.
+
+The above mentioned distinction is dictated by Linux architecture. In
+particular, by the Linux Page Cache that works on per-page basis. I.e.,
+JFFS2 is asked to read data from files by fractions of
+\texttt{PAGE\_SIZE} bytes. Obviously, the easiest way to form the
+requested RAM page of data is to read it directly from flash (and
+perhaps, to uncompress) to the RAM page. When the file data
+corresponding to the requested RAM page is
+scattered over several nodes, the task becomes a bit more complex. And
+it is much more complex when the data is scattered over several nodes
+and compressed.
+
+Pristine nodes are pretty good idea from the performance's viewpoint
+but have some substantial disadvantages compared to the data nodes
+of larger size:
+
+\begin{itemize}
+\item the compression ratio is worse when small data chunks are compressed;
+
+\item each data node involves some additional flash space overhead
+because of its header;
+
+\item JFFS2 needs more RAM to keep track of nodes;
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% ABBREVIATIONS
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Abbreviations}
+\begin{enumerate}
+\item \emph{BB} - Bad Block
+\item \emph{CRC} - Cyclic Redundancy Check
+\item \emph{CP} -  Check-Point
+\item \emph{FCP} -  File Check-Point
+\item \emph{FCP2} - File Check-Point level 2
+\item \emph{JFFS2} - Journalling Flash File System version 2
+\item \emph{JFFS3} - Journalling Flash File System version 3
+\item \emph{MTD} - Memory Technology Devices
+\item \emph{VFS} - Virtual File System
+\end{enumerate}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% DEFINITIONS
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Definitions}
+
+\begin{enumerate}
+\item \emph{Block, Sector} --
+the minimal flash erasable unit.
+
+\item \emph{Bad block} -- unreliable flash block which must not be exploited.
+NAND and AND flash chips may be shipped with bad blocks. These blocks are marked
+bad and must not be ever used (read, written or erased). The technology also implies
+that new bad blocks may appear during the flash's life-cycle. These blocks
+have to be marked bad too.
+
+\item \emph{Data node} -- the inode node relating to file, not to directory.
+
+\item \emph{Dentree, directory entry tree} -- TODO. Not designed yet.
+The Idea is to keep 
+direntries of the directory in a sort of balanced tree, not in a list as
+it is done in JFFS2.
+
+\item \emph{Direntry node} -- node representing JFFS3 directory entry.
+Each JFFS3 directory entry is represented by one valid direntry node.
+
+\item \emph{Dirt, dirty space} -- the flash space which was once used
+but doesn't contain useful information anymore. Due to flash nature this
+space can't be used before the relating block has been erased. To put it
+differently, the dirty space is comprised of obsolete nodes and
+paddings.
+
+\item \emph{Fragtree, fragment tree} -- a Red-Black tree of the file
+fragments scattered over JFFS3 data nodes. Used to quickly lookup which
+nodes ought to be read in order to get the needed file data range.
+
+\item \emph{Garbage Collector} -- very important part of JFFS3
+design designated to reclaim dirt. Namely, GC moves
+valid nodes from dirty vblocks to newly erased vblocks reclaiming the space
+occupied by dirt. Another substantial aspect GC is responsible for is
+the wear-levelling support and the production of pristine nodes.
+
+\item \emph{Gcblock} -- the block which is currently being Garbage
+Collected, i.e., the valid nodes are moved from this block by the GC.
+
+\item \emph{Node} --
+basic JFFS3 data structure. Anything that JFFS3 stores on flash is
+stored in form of node(s). There are different types of nodes defined.
+
+\item \emph{Node header} --
+nodes and the relating data structures largely consist of two parts - header and
+data. Node header contains internal information while node data contains some
+user-visible data like file's content or direntry's name.
+
+\item \emph{Non-pristine node} -- a type of data node which contains the amount
+of uncompressed data which is not multiple of \texttt{PAGE\_SIZE} bytes.
+
+\item \emph{ICP entry} - a short record in ICP referring a node.
+
+\item \emph{Icp\_ref} - a small object representing an ICP. Belongs to
+the in-core objects group.
+
+\item \emph{In-core memory, in-core RAM} -- the memory that is consumed by
+node\_ref, inode\_ref and icp\_ref objects.
+
+\item \emph{Inode\_ref} - a small object representing an inode (of any
+type). Belongs to the in-core objects group.
+
+\item \emph{Inode build} -- a process which is activated by the
+\texttt{iget()} VFS call. The main tasks are: to build the dentree
+for th directory inodes and to build fragtree
+for the regular file inodes.
+
+\item \emph{Inode node} -- a node representing JFFS3 inode.
+Any inode in JFFS3 is represented by one (for directory inodes) or more
+(for file inodes) inode nodes.
+
+\item \emph{Node\_ref} - a small object representing any JFFS3 node (of any type).
+Belongs to the in-core objects group.
+
+\item \emph{Obsolete node} - a node which does not contain any
+actual information. The exact semantic of obsolete node depends on its
+type.
+
+\item \emph{Padding node} -- fake node representing nothing and
+as a rule produced when JFFS3 synchronizes the write buffer(s) or the end
+of vblock has been reached and there is no enough space to write
+any meaningful node. Padding nodes facilitate the faster filesystem
+scanning.
+
+\item \emph{Pristine node} -- a type of data node which contain multiple of
+\texttt{PAGE\_SIZE} bytes of data in the uncompressed form.
+
+\item \emph{Summary node, summary} --
+describes the layout of full vblock. Summary is  situated at the end
+of each vblock and describes the vblock's layout, e.g. position, type,
+length, etc of all the vblock's nodes.
+
+\item \emph{Valid node} -- not obsolete node.
+
+\item \emph{Vblock, virtual block} --
+JFFS3 may treat several blocks as one vblock of larger size.
+Thus, the minimal erasable flash unit from the JFFS3's viewpoint
+is vblock which consists of one or more flash blocks.
+
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% REFERENCES
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{References}
+
+\begin{enumerate}
+\item \raggedright \label{ref_MTD}
+Memory Technology Device (MTD) Subsystem for Linux,\\
+\url{www.linux-mtd.infradead.org}.
+
+\item \raggedright \label{ref_JFFSdwmw2}
+JFFS : The Journalling Flash File System,\\
+\url{http://sources.redhat.com/jffs2/jffs2-html/}
+
+\item \raggedright \label{ref_NANDMTD}
+NAND Flash,\\
+\url{http://www.linux-mtd.infradead.org/tech/nand.html}.
+
+\item \raggedright \label{ref_ToshibaNAND}
+Toshiba NAND Flash Applications Design Guide,\\
+\url{www.semicon.toshiba.co.jp/eng/prd/memory/doc/pdf/nand\_applicationguide\_e.pdf}.
+
+\item \raggedright \label{ref_SamsungOneNAND}
+Samsung OneNAND, might be found at\\
+\url{http://www.samsung.com}.
+
+\item \raggedright \label{ref_RenesasAND}
+Renesas Technology - AG-AND / superAND Flash Memory, might be found at\\
+\url{http://www.renesas.com}.
+
+\item \raggedright \label{ref_AtmelDataFlash}
+Atmel DataFlash,\\
+\url{http://www.atmel.com/products/DataFlash/.}
+
+\item \raggedright \label{ref_GormanVM}
+Mel Gorman, Linux VM Documentation,\\
+\url{www.csn.ul.ie/~mel/projects/vm}.
+
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% CREDITS
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Credits}
+Joern Engel\\
+David Woodhouse\\
+Josh Boyer\\
+Ferenc Havasi\\
+Joakim Tjernlund\\
+Jared Hulbert
+
+\small{Note: feel free to remind us to include your name if it has been
+forgotten.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% MISCELLANIOUS
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Miscellaneous}
+This section contains the gathered list of different ideas and thoughts
+suggested by different people but have not yet highlighted/used in this
+document. Many of them may be quite useful.
+
+\begin{enumerate}
+\item Make the compression selectable per-file (may be using xattr).\\
+\url{http://lists.infradead.org/pipermail/linux-mtd/2005-January/011645.html}.
+
+\item Make one more checksum mode when checksums are neither
+generated nor checked.\\
+\url{http://lists.infradead.org/pipermail/linux-mtd/2005-January/011640.html}.
+
+\item Have special type of nodes where we may store static inode node's
+(and may be other's) attributes like UID and GID. Perhaps, the xattr
+support may be used here.\\
+\url{http://lists.infradead.org/pipermail/linux-mtd/2005-January/011615.html}.
+
+\item Implement xattr support. There are a lot of cases when having it
+would be very handy.\\
+\url{http://lists.infradead.org/pipermail/linux-mtd/2005-January/011617.html}\\
+\url{http://lists.infradead.org/pipermail/linux-mtd/2005-January/011632.html}\\
+\url{http://lists.infradead.org/pipermail/linux-mtd/2005-January/011644.html}\\
+\url{http://lists.infradead.org/pipermail/linux-mtd/2005-January/011556.html}
+
+\item Make compression selectable per file.\\
+\url{http://lists.infradead.org/pipermail/linux-mtd/2005-January/011641.html}
+
+\item Have the end magic bitmask on all note types in order to be able
+to quickly detect the partially written nodes.\\
+\url{http://lists.infradead.org/pipermail/linux-mtd/2005-January/011529.html}.
+
+\item Increase the maximum node size. We may keep several pages in one node.
+This leads to better compression and less memory consumption. Use
+zisofs-like technique when reading the node with several pages of data
+(compressed).\\
+\url{http://lists.infradead.org/pipermail/linux-mtd/2005-January/011672.html}\\
+and following.
+
+\item Implement write-back cache in JFFS3.\\
+\url{http://lists.infradead.org/pipermail/linux-mtd/2005-January/011672.html}\\
+and following.
+\end{enumerate}
+
+\end{document}
+

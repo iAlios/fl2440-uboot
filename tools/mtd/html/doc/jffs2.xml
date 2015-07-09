@@ -1,0 +1,60 @@
+<PAGE>
+	<VAR match="VAR_ORIGIN" replace="../" />
+	<VAR match="VAR_CVSID" replace="$Id: jffs2.xml,v 1.1 2005/03/12 13:48:22 gleixner Exp $"/>
+	<INCLUDE file="../inc/header.tmpl" />
+
+	<VAR match="VAR_SEL_DOC" replace="selected" />
+	<VAR match="VAR_SEL_JFFS2" replace="selected" />
+	<PARSE file="../menu1.xml" />
+
+	<INCLUDE file="../inc/content.tmpl" />
+
+    <h2>JFFS2</h2>
+    <p>
+	JFFS2 provides a filesystem directly on the 
+	flash, rather than emulating a block device. For more information,
+	see <a href="http://sources.redhat.com/jffs2/">sources.redhat.com</a>.
+    </p>
+    
+    <hr size="2" />
+    	
+    <h2>JFFS2 erase block size</h2>
+
+    <p>Unlike the original JFFS, JFFS2 treats each erase block of the
+    flash separately. It will never write nodes which cross from one
+    erase block to another, and will not cope if it encounters a file
+    system with such nodes. Any node which crosses an erase block
+    boundary will be ignored by JFFS2, and the data it contains will
+    be lost, causing the file system to be corrupted.</p>
+
+    <p>If there's not enough space at the end of the current erase
+    block to write a whole node, JFFS2 will leave it blank and
+    continue writing to a new erase block.</p>
+
+    <p>Also, JFFS2 always starts writing at the beginning of an erase
+    block, and does not expect to find free space in the middle. Any
+    free space in an erase block should go all the way to the end of
+    the erase block. JFFS2 will print a complaint such as:</p>
+    <div>
+<pre>
+jffs2_scan_empty(): Empty block at 0x0012fffc ends at 0x00130000 (with 0xe0021985)! Marking dirty
+</pre>
+    </div>	
+    <p>if it finds free space in between the nodes in an erase
+    block. This situation is harmless though - it's just a little bit
+    of wasted space, that's all.</p>
+
+    <p>Both of these situations can occur if you create a JFFS2 image
+      with <tt>mkfs.jffs2</tt> using the wrong value for the erase
+      block size (the <tt>-e</tt> option). The default is 64KiB,
+      because that's the smallest erase block size you're likely to
+      encounter often, and creating an image with smaller eraseblock
+      size than the actual hardware is harmless -- it just gives
+      annoying messages. If you see the messages mentioned above,
+      check the erase block size of your device (look in
+      <tt>/proc/mtd</tt> if you don't know), and create your JFFS2
+      image for it with the correct <tt>-e</tt> option.</p>
+
+		
+	<INCLUDE file="../inc/footer.tmpl" />
+</PAGE>
