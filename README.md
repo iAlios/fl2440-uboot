@@ -6,8 +6,11 @@ fl2440 uboot
   新版的uboot的板級編譯配置是boards.cfg中進行配置的，其解析方式還是同老版本的uboot一樣，是通過mkconfig腳本來進行配置的。因此mkconfig文件需要具有可執行的權限。
   
   tools 中包含了一些工具
+  
 	mtd	其中存放了mtd相关内容，mtd/util 中还有mkfs.jffs2等相关工具（make && make install 即可安装）
+
 	easylogo   方便创建 logo的工具
+
 	logo	其中存放了video相关的工具
 
   编译方法
