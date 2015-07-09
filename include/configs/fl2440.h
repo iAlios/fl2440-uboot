@@ -182,8 +182,6 @@
 #endif
 
 
-//#define CONFIG_MTD_DEBUG
-//#define CONFIG_MTD_DEBUG_VERBOSE 3
 #define CONFIG_NAND_S3C2440
 
 /* NAND configuration */
@@ -291,9 +289,6 @@
 #define CONFIG_MTD_DEBUG_VERBOSE  0
 // #define DEBUG_CFB_CONSOLE   1
 #endif
-
-// #define CMD_NAND_YAFFS
-// #define CMD_NAND_YAFFS_SKIPFB
 
 #define CONFIG_SYS_NO_FLASH
 #undef CONFIG_CMD_FLASH
