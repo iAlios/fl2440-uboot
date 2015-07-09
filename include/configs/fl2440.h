@@ -292,8 +292,8 @@
 // #define DEBUG_CFB_CONSOLE   1
 #endif
 
-#define CMD_NAND_YAFFS
-#define CMD_NAND_YAFFS_SKIPFB
+// #define CMD_NAND_YAFFS
+// #define CMD_NAND_YAFFS_SKIPFB
 
 #define CONFIG_SYS_NO_FLASH
 #undef CONFIG_CMD_FLASH
