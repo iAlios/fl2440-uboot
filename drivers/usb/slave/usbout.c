@@ -10,7 +10,7 @@
 #include <asm/io.h>
 
 #include "def.h"
- 
+
 #include "2440usb.h"
 #include "usbmain.h"
 #include "usb.h"
@@ -23,26 +23,26 @@
 #define BIT_USBD		(0x1<<25)
 #define BIT_DMA2		(0x1<<19)
 
-extern volatile U32 dwUSBBufReadPtr;
-extern volatile U32 dwUSBBufWritePtr;
-extern volatile U32 dwWillDMACnt;
-extern volatile U32 bDMAPending;
-extern volatile U32 dwUSBBufBase;
-extern volatile U32 dwUSBBufSize;
-extern void ClearPending_my(int bit); 
+extern volatile U32 dw_usb_buf_read_ptr;
+extern volatile U32 dw_usb_buf_write_ptr;
+extern volatile U32 dw_will_dma_cnt;
+extern volatile U32 b_dma_pending;
+extern volatile U32 dw_usb_buf_base;
+extern volatile U32 dw_usb_buf_size;
+extern void
+clear_pending(int bit);
 //static void PrintEpoPkt(U8 *pt,int cnt);
-static void RdPktEp3_CheckSum(U8 *buf,int num);
+static void
+rdpkt_ep3_check_sum(U8 *buf, int num);
 
 // ===================================================================
 // All following commands will operate in case 
 // - out_csr3 is valid.
 // ===================================================================
 
- 
-
-#define CLR_EP3_OUT_PKT_READY() writeb(((out_csr3 & (~ EPO_WR_BITS)) & (~EPO_OUT_PKT_READY)) , &usbdevregs->OUT_CSR1_REG)
+#define CLR_EP3_OUT_PKT_READY() writeb(((out_csr3 & (~ EPO_WR_BITS)) & (~EPO_OUT_PKT_READY)) , &usb_dev_regs->OUT_CSR1_REG)
 //#define SET_EP3_SEND_STALL()	usbdevregs->OUT_CSR1_REG= ((out_csr3 & (~EPO_WR_BITS)) | EPO_SEND_STALL) 
-#define CLR_EP3_SENT_STALL()	writeb(((out_csr3 & (~EPO_WR_BITS)) &(~EPO_SENT_STALL)), &usbdevregs->OUT_CSR1_REG)
+#define CLR_EP3_SENT_STALL()	writeb(((out_csr3 & (~EPO_WR_BITS)) &(~EPO_SENT_STALL)), &usb_dev_regs->OUT_CSR1_REG)
 //#define FLUSH_EP3_FIFO() 	usbdevregs->OUT_CSR1_REG= ((out_csr3 & (~EPO_WR_BITS)) |EPO_FIFO_FLUSH) 
 
 // ***************************
@@ -52,189 +52,161 @@ static void RdPktEp3_CheckSum(U8 *buf,int num);
 
 // EP3 = OUT end point. 
 
-U8 ep3Buf[EP3_PKT_SIZE];
+U8 ep3_buf[EP3_PKT_SIZE];
 
-void Ep3Handler(void)
-{
-	struct s3c24x0_interrupt * intregs = s3c24x0_get_base_interrupt();
-	struct s3c24x0_usb_device * const usbdevregs = s3c24x0_get_base_usb_device();
-    U8 out_csr3;
-    int fifoCnt;
-	writeb(3, &usbdevregs->INDEX_REG);
-	out_csr3 = readb(&usbdevregs->OUT_CSR1_REG);
-    
+void ep3_handler(void) {
+	struct s3c24x0_interrupt * int_regs = s3c24x0_get_base_interrupt();
+	struct s3c24x0_usb_device * const usb_dev_regs =
+			s3c24x0_get_base_usb_device();
+	U8 out_csr3;
+	int fifoCnt;
+	writeb(3, &usb_dev_regs->INDEX_REG);
+	out_csr3 = readb(&usb_dev_regs->OUT_CSR1_REG);
+
 //    DbgPrintf("<3:%x]",out_csr3);
 
-    if(out_csr3 & EPO_OUT_PKT_READY)
-    {   
+	if (out_csr3 & EPO_OUT_PKT_READY) {
 //	fifoCnt=usbdevregs->OUT_FIFO_CNT1_REG; 
-	fifoCnt = readb(&usbdevregs->OUT_FIFO_CNT1_REG);
+		fifoCnt = readb(&usb_dev_regs->OUT_FIFO_CNT1_REG);
 #if 0
-	RdPktEp3(ep3Buf,fifoCnt);
-	PrintEpoPkt(ep3Buf,fifoCnt);
+		rd_pkt_ep3(ep3_buf,fifoCnt);
+		PrintEpoPkt(ep3_buf,fifoCnt);
 #else
 
-	if(downloadFileSize==0)
-	{
-   	    RdPktEp3((U8 *)downPt,8); 	
-   	    
-   	    if(download_run==0)
-   	    {
-		    downloadAddress=tempDownloadAddress;
-	    }
-	    else
-	    {
-	    	downloadAddress=
-	    		*((U8 *)(downPt+0))+
-			(*((U8 *)(downPt+1))<<8)+
-			(*((U8 *)(downPt+2))<<16)+
-			(*((U8 *)(downPt+3))<<24);
-            
-            dwUSBBufReadPtr = downloadAddress;
-            dwUSBBufWritePtr = downloadAddress;
-	    }
-	    downloadFileSize=
-	    	*((U8 *)(downPt+4))+
-		(*((U8 *)(downPt+5))<<8)+
-		(*((U8 *)(downPt+6))<<16)+
-		(*((U8 *)(downPt+7))<<24);
-	    checkSum=0;
-	    downPt=(U8 *)downloadAddress;
+		if (download_file_size == 0) {
+			rd_pkt_ep3((U8 *) down_ptr, 8);
 
-  	    RdPktEp3_CheckSum((U8 *)downPt,fifoCnt-8); //The first 8-bytes are deleted.	    
-  	    downPt+=fifoCnt-8;  
-  	    
-  	#if USBDMA
-     	    //CLR_EP3_OUT_PKT_READY() is not executed. 
-     	    //So, USBD may generate NAK until DMA2 is configured for USB_EP3;
-		writel((readl(&intregs->INTMSK) | BIT_USBD), &intregs->INTMSK);
-      	    return;	
-  	#endif	
-	}
-	else
-	{
-	#if USBDMA    	
-	    printf("<ERROR>");
-	#endif    
-	    RdPktEp3_CheckSum((U8 *)downPt,fifoCnt); 	    
-	    downPt+=fifoCnt;  //fifoCnt=64
-	}
+			if (download_run == 0) {
+				downloadAddress = temp_download_address;
+			} else {
+				downloadAddress = *((U8 *) (down_ptr + 0))
+						+ (*((U8 *) (down_ptr + 1)) << 8)
+						+ (*((U8 *) (down_ptr + 2)) << 16)
+						+ (*((U8 *) (down_ptr + 3)) << 24);
+
+				dw_usb_buf_read_ptr = downloadAddress;
+				dw_usb_buf_write_ptr = downloadAddress;
+			}
+			download_file_size = *((U8 *) (down_ptr + 4))
+					+ (*((U8 *) (down_ptr + 5)) << 8)
+					+ (*((U8 *) (down_ptr + 6)) << 16)
+					+ (*((U8 *) (down_ptr + 7)) << 24);
+			checkSum = 0;
+			down_ptr = (U8 *) downloadAddress;
+
+			rdpkt_ep3_check_sum((U8 *) down_ptr, fifoCnt - 8); //The first 8-bytes are deleted.
+			down_ptr += fifoCnt - 8;
+
+#if USBDMA
+			//CLR_EP3_OUT_PKT_READY() is not executed.
+			//So, USBD may generate NAK until DMA2 is configured for USB_EP3;
+			writel((readl(&int_regs->INTMSK) | BIT_USBD), &int_regs->INTMSK);
+			return;
 #endif
-   	CLR_EP3_OUT_PKT_READY();
-#if 0
-       if(((rOUT_CSR1_REG&0x1)==1) && ((rEP_INT_REG & 0x8)==0))
-  		{
-  		fifoCnt=rOUT_FIFO_CNT1_REG; 
-		RdPktEp3_CheckSum((U8 *)downPt,fifoCnt); 	    
-	       downPt+=fifoCnt;  //fifoCnt=64
-	       CLR_EP3_OUT_PKT_READY();
+		} else {
+#if USBDMA
+			printf("<ERROR>");
+#endif
+			rdpkt_ep3_check_sum((U8 *) down_ptr, fifoCnt);
+			down_ptr += fifoCnt;  //fifoCnt=64
 		}
 #endif
-  	return;
-    }
+		CLR_EP3_OUT_PKT_READY();
+#if 0
+		if(((rOUT_CSR1_REG&0x1)==1) && ((rEP_INT_REG & 0x8)==0))
+		{
+			fifoCnt=rOUT_FIFO_CNT1_REG;
+			rdpkt_ep3_check_sum((U8 *)down_ptr,fifoCnt);
+			down_ptr+=fifoCnt;  //fifoCnt=64
+			CLR_EP3_OUT_PKT_READY();
+		}
+#endif
+		return;
+	}
 
-    
-    //I think that EPO_SENT_STALL will not be set to 1.
-    if(out_csr3 & EPO_SENT_STALL)
-    {   
-   	DbgPrintf("[STALL]");
-   	CLR_EP3_SENT_STALL();
-   	return;
-    }	
+	//I think that EPO_SENT_STALL will not be set to 1.
+	if (out_csr3 & EPO_SENT_STALL) {
+		dbg_printf("[STALL]");
+		CLR_EP3_SENT_STALL();
+		return;
+	}
 }
 
-
 #if 0
-void PrintEpoPkt(U8 *pt,int cnt)
+void print_epo_pkt(U8 *pt,int cnt)
 {
-    int i;
-    DbgPrintf("[BOUT:%d:",cnt);
-    for(i=0;i<cnt;i++)
-    	DbgPrintf("%x,",pt[i]);
-    DbgPrintf("]");
+	int i;
+	dbg_printf("[BOUT:%d:",cnt);
+	for(i=0;i<cnt;i++)
+	dbg_printf("%x,",pt[i]);
+	dbg_printf("]");
 }
 #endif
 
-void RdPktEp3_CheckSum(U8 *buf,int num)
-{
-    int i;
-	struct s3c24x0_usb_device * const usbdevregs	= s3c24x0_get_base_usb_device();    
-	
-    for(i=0;i<num;i++)
-    {
-	buf[i] = readb(&usbdevregs->fifo[3].EP_FIFO_REG);
-        checkSum+=buf[i];
-    }
+void rdpkt_ep3_check_sum(U8 *buf, int num) {
+	int i;
+	struct s3c24x0_usb_device * const usb_dev_regs =
+			s3c24x0_get_base_usb_device();
+
+	for (i = 0; i < num; i++) {
+		buf[i] = readb(&usb_dev_regs->fifo[3].EP_FIFO_REG);
+		checkSum += buf[i];
+	}
 }
 
+void isr_dma2(void) {
+	struct s3c24x0_interrupt * int_regs = s3c24x0_get_base_interrupt();
+	struct s3c24x0_usb_device * const usb_dev_regs =
+			s3c24x0_get_base_usb_device();
+	U8 out_csr3;
+	U32 dw_empty_cnt;
+	U8 save_index_reg = readb(&usb_dev_regs->INDEX_REG);
+	writeb(3, &usb_dev_regs->INDEX_REG);
+	out_csr3 = readb(&usb_dev_regs->OUT_CSR1_REG);
 
+	clear_pending((int) BIT_DMA2);
 
-void IsrDma2(void)
-{
-	struct s3c24x0_interrupt * intregs = s3c24x0_get_base_interrupt();
-	struct s3c24x0_usb_device * const usbdevregs	= s3c24x0_get_base_usb_device();
-    U8 out_csr3;
-    U32 dwEmptyCnt;
-	U8 saveIndexReg = readb(&usbdevregs->INDEX_REG);
-	writeb(3, &usbdevregs->INDEX_REG);
-	out_csr3 = readb(&usbdevregs->OUT_CSR1_REG);
+	if (!total_dma_count)
+		total_dma_count = dw_will_dma_cnt + EP3_PKT_SIZE;
+	else
+		total_dma_count += dw_will_dma_cnt;
 
-    ClearPending_my((int)BIT_DMA2);	    
+	dw_usb_buf_write_ptr = ((dw_usb_buf_write_ptr + dw_will_dma_cnt
+			- dw_usb_buf_base) % dw_usb_buf_size) + dw_usb_buf_base;
 
-    /* thisway.diy, 2006.06.22 
-     * When the first DMA interrupt happened, it has received max (0x80000 + EP3_PKT_SIZE) bytes data from PC
-     */
-    if (!totalDmaCount) 
-        totalDmaCount = dwWillDMACnt + EP3_PKT_SIZE;
-    else
-        totalDmaCount+=dwWillDMACnt;
+	if (total_dma_count >= download_file_size) {
+		total_dma_count = download_file_size;
 
-//    dwUSBBufWritePtr = ((dwUSBBufWritePtr + dwWillDMACnt - USB_BUF_BASE) % USB_BUF_SIZE) + USB_BUF_BASE; /* thisway.diy, 2006.06.21 */
-    dwUSBBufWritePtr = ((dwUSBBufWritePtr + dwWillDMACnt - dwUSBBufBase) % dwUSBBufSize) + dwUSBBufBase;
+		config_ep3_int_mode();
 
-    if(totalDmaCount>=downloadFileSize)// is last?
-    {
-    	totalDmaCount=downloadFileSize;
-	
-    	ConfigEp3IntMode();	
+		if (out_csr3 & EPO_OUT_PKT_READY) {
+			CLR_EP3_OUT_PKT_READY();
+		}
+		writel(((readl(&int_regs->INTMSK) | BIT_DMA2) & ~(BIT_USBD)),
+				&int_regs->INTMSK);
+	} else {
+		if ((total_dma_count + 0x80000) < download_file_size) {
+			dw_will_dma_cnt = 0x80000;
+		} else {
+			dw_will_dma_cnt = download_file_size - total_dma_count;
+		}
 
-    	if(out_csr3& EPO_OUT_PKT_READY)
-    	{
-       	    CLR_EP3_OUT_PKT_READY();
-	    }
-		writel(((readl(&intregs->INTMSK) | BIT_DMA2) & ~(BIT_USBD)), &intregs->INTMSK);
-    }
-    else
-    {
-    	if((totalDmaCount+0x80000)<downloadFileSize)	
-    	{
-    	    dwWillDMACnt = 0x80000;
-	    }
-    	else
-    	{
-    	    dwWillDMACnt = downloadFileSize - totalDmaCount;
-    	}
-
-        // dwEmptyCnt = (dwUSBBufReadPtr - dwUSBBufWritePtr - 1 + USB_BUF_SIZE) % USB_BUF_SIZE; /* thisway.diy, 2006.06.21 */
-        dwEmptyCnt = (dwUSBBufReadPtr - dwUSBBufWritePtr - 1 + dwUSBBufSize) % dwUSBBufSize;
-        if (dwEmptyCnt >= dwWillDMACnt)
-        {
-    	    ConfigEp3DmaMode(dwUSBBufWritePtr, dwWillDMACnt);
-        }
-        else
-        {
-            bDMAPending = 1;
-        }
-    }
-	writeb(saveIndexReg, &usbdevregs->INDEX_REG);
+		dw_empty_cnt = (dw_usb_buf_read_ptr - dw_usb_buf_write_ptr - 1
+				+ dw_usb_buf_size) % dw_usb_buf_size;
+		if (dw_empty_cnt >= dw_will_dma_cnt) {
+			config_ep3_dma_mode(dw_usb_buf_write_ptr, dw_will_dma_cnt);
+		} else {
+			b_dma_pending = 1;
+		}
+	}
+	writeb(save_index_reg, &usb_dev_regs->INDEX_REG);
 }
 
-
-void ClearEp3OutPktReady(void)
-{
-	struct s3c24x0_usb_device * const usbdevregs	= s3c24x0_get_base_usb_device();
-    U8 out_csr3;
-	writeb(3, &usbdevregs->INDEX_REG);
-	out_csr3 = readb(&usbdevregs->OUT_CSR1_REG);
-    CLR_EP3_OUT_PKT_READY();
+void clear_ep3_out_pkt_ready(void) {
+	struct s3c24x0_usb_device * const usb_dev_regs =
+			s3c24x0_get_base_usb_device();
+	U8 out_csr3;
+	writeb(3, &usb_dev_regs->INDEX_REG);
+	out_csr3 = readb(&usb_dev_regs->OUT_CSR1_REG);
+	CLR_EP3_OUT_PKT_READY();
 }

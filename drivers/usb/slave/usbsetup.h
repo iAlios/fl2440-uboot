@@ -8,9 +8,9 @@
 #ifndef __USBSETUP_H__
 #define __USBSETUP_H__
 
-void Ep0Handler(void);
-void InitDescriptorTable(void);
-void PrintEp0Pkt(U8 *pt);
+void ep0_handler(void);
+void init_descriptor_table(void);
+void print_ep0_pkt(U8 *pt);
 
 
 #define EP0_STATE_INIT 			(0)  
@@ -49,7 +49,7 @@ void PrintEp0Pkt(U8 *pt);
 
 
 
-extern U32 ep0State;
+extern U32 ep0_state;
 
 
 #endif /*__USBSETUP_H__*/

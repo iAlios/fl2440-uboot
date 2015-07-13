@@ -19,7 +19,6 @@
 
 //static void PrintEpiPkt(U8 *pt,int cnt);
 
-
 // ===================================================================
 // All following commands will operate in case 
 // - in_csr1 is valid.
@@ -32,7 +31,6 @@
 #define CLR_EP1_SENT_STALL()	writeb(((in_csr1 & (~EPI_WR_BITS)) & (~EPI_SENT_STALL) ), &usbdevregs->EP0_CSR_IN_CSR1_REG);
 // #define FLUSH_EP1_FIFO() 	usbdevregs->EP0_CSR_IN_CSR1_REG= ((in_csr1 & (~EPI_WR_BITS)) | EPI_FIFO_FLUSH )
 
-
 // ***************************
 // *** VERY IMPORTANT NOTE ***
 // ***************************
@@ -41,64 +39,63 @@
 // EP1 = IN end point. 
 
 U8 ep1Buf[EP1_PKT_SIZE];
-int transferIndex=0;
+int transferIndex = 0;
 
-void PrepareEp1Fifo(void) 
-{
-	struct s3c24x0_usb_device * const usbdevregs = s3c24x0_get_base_usb_device();
+void prepare_ep1_fifo(void) {
+	struct s3c24x0_usb_device * const usbdevregs =
+			s3c24x0_get_base_usb_device();
 	int i;
 	U8 in_csr1;
-	
-	writeb(1,&usbdevregs->INDEX_REG);
+
+	writeb(1, &usbdevregs->INDEX_REG);
 //	usbdevregs->INDEX_REG=1;
 	in_csr1 = readb(&usbdevregs->EP0_CSR_IN_CSR1_REG);
 //	in_csr1=usbdevregs->EP0_CSR_IN_CSR1_REG;
-    
-	for(i=0;i<EP1_PKT_SIZE;i++) {
-		ep1Buf[i]=(U8)(transferIndex+i);
+
+	for (i = 0; i < EP1_PKT_SIZE; i++) {
+		ep1Buf[i] = (U8) (transferIndex + i);
 	}
-	
-	WrPktEp1(ep1Buf,EP1_PKT_SIZE);
-	SET_EP1_IN_PKT_READY(); 
+
+	wr_pkt_ep1(ep1Buf, EP1_PKT_SIZE);
+	SET_EP1_IN_PKT_READY()
+	;
 }
 
-
-void Ep1Handler(void)
-{
+void ep1_handler(void) {
 	U8 in_csr1;
-	struct s3c24x0_usb_device * const usbdevregs = s3c24x0_get_base_usb_device();
-	writeb(1,&usbdevregs->INDEX_REG);
+	struct s3c24x0_usb_device * const usbdevregs =
+			s3c24x0_get_base_usb_device();
+	writeb(1, &usbdevregs->INDEX_REG);
 //	usbdevregs->INDEX_REG=1;
 	in_csr1 = readb(&usbdevregs->EP0_CSR_IN_CSR1_REG);
 //	in_csr1=usbdevregs->EP0_CSR_IN_CSR1_REG;
-    
+
 //	DbgPrintf("<1:%x]",in_csr1);
 
-	//I think that EPI_SENT_STALL will not be set to 1.
-	if(in_csr1 & EPI_SENT_STALL)
-	{   
+//I think that EPI_SENT_STALL will not be set to 1.
+	if (in_csr1 & EPI_SENT_STALL) {
 //		DbgPrintf("[STALL]");
-		CLR_EP1_SENT_STALL();
-   		return;
-	}	
+		CLR_EP1_SENT_STALL()
+		;
+		return;
+	}
 
 	//IN_PKT_READY is cleared
 	//The data transfered was ep1Buf[] which was already configured 
 
 //	PrintEpiPkt(ep1Buf,EP1_PKT_SIZE); 
-    
+
 	transferIndex++;
 
-	PrepareEp1Fifo(); 
-    	//IN_PKT_READY is set   
-    	//This packit will be used for next IN packit.	
+	prepare_ep1_fifo();
+	//IN_PKT_READY is set
+	//This packit will be used for next IN packit.
 
-    return;
+	return;
 }
 
-
 #if 0    
-void PrintEpiPkt(U8 *pt,int cnt)
+void print_epi_pkt(U8 *pt,int cnt)
 {
 	int i;
 	DbgPrintf("[B_IN:%d:",cnt);

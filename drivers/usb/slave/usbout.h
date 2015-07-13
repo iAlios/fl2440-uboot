@@ -8,10 +8,10 @@
 #ifndef __USBOUT_H__
 #define __USBOUT_H__
 
-void Ep3Handler(void);
-void Ep3HandlerOptimized(void);
+void ep3_handler(void);
+void ep3_handler_optimized(void);
 
-void IsrDma2(void);
-void ClearEp3OutPktReady(void);
+void isr_dma2(void);
+void clear_ep3_out_pkt_ready(void);
 
 #endif /*__USBOUT_H__*/

@@ -12,18 +12,18 @@
 
 #define PWR_REG_DEFAULT_VALUE (DISABLE_SUSPEND)
 
-void ConfigUsbd(void);
-void ReconfigUsbd(void);
+void config_usbd(void);
+void reconfig_usbd(void);
 
-void RdPktEp0(U8 *buf,int num);
-void WrPktEp0(U8 *buf,int num);
-void WrPktEp1(U8 *buf,int num);
-void WrPktEp2(U8 *buf,int num);
-void RdPktEp3(U8 *buf,int num);
-void RdPktEp4(U8 *buf,int num);
+void rd_pkt_ep0(U8 *buf,int num);
+void wr_pkt_ep0(U8 *buf,int num);
+void wr_pkt_ep1(U8 *buf,int num);
+void wr_pkt_ep2(U8 *buf,int num);
+void rd_pkt_ep3(U8 *buf,int num);
+void rd_pkt_ep4(U8 *buf,int num);
 
-void ConfigEp3IntMode(void);
-void ConfigEp3DmaMode(U32 bufAddr,U32 count);
+void config_ep3_int_mode(void);
+void config_ep3_dma_mode(U32 bufAddr,U32 count);
 
 #endif /*__USBLIB_H__*/
 

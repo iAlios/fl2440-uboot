@@ -8,10 +8,10 @@
 #ifndef __USBMAIN_H__
 #define __USBMAIN_H__
 
-void UsbdMain(void);
-void IsrUsbd(void);
+void usbd_main(void);
+void isr_usbd(void);
 
-void DbgPrintf(char *fmt,...);
+void dbg_printf(char *fmt,...);
 
 
 #endif /*__USBMAIN_H__*/
