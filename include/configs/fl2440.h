@@ -241,6 +241,11 @@
 #define CONFIG_JFFS2_PART_OFFSET   0x40000
 /*JFFS2 support*/
 
+/*USB Device*/
+#define CONFIG_USB_DEVICE
+#define CONFIG_USB_TTY
+/*USB Device*/
+
 /*USB support*/
 #define CONFIG_USB_OHCI
 #define CONFIG_USB_STORAGE
