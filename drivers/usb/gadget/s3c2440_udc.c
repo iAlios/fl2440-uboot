@@ -28,6 +28,8 @@
 
 /* we can't use the regular debug macros since the console might be
  * set to usbtty, which would cause deadlocks! */
+#define DEBUG
+
 #ifdef	DEBUG
 #undef debug
 #undef debugX
@@ -633,9 +635,9 @@ void udc_connect (void)
 	struct s3c24x0_interrupt * irq = s3c24x0_get_base_interrupt();
 	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
 
-	gpio->GPGDAT &= ~S3C24X0_MISCCR_USBSUSPND0;
+	gpio->GPGDAT &= ~S3C24X0_MISCCR_USBSUSPND1;
 	udelay(10000);
-	gpio->GPGDAT |= S3C24X0_MISCCR_USBSUSPND0;
+	gpio->GPGDAT |= S3C24X0_MISCCR_USBSUSPND1;
 
 	irq->INTMSK &= ~BIT_USBD;
 }
@@ -647,7 +649,7 @@ void udc_disconnect (void)
 	struct s3c24x0_interrupt * irq = s3c24x0_get_base_interrupt();
 	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
 
-	gpio->GPGDAT &= ~S3C24X0_MISCCR_USBSUSPND0;
+	gpio->GPGDAT &= ~S3C24X0_MISCCR_USBSUSPND1;
 
 	/* Disable interrupt (we don't want to get interrupts while the kernel
 	 * is relocating itself */
