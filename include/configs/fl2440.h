@@ -145,6 +145,14 @@
                                 "1m(logo),"                                     \
                                 "5m(kernel),"                                   \
                                 "-(rootfs)"                      
+                                
+	
+#define	CONFIG_EXTRA_ENV_SETTINGS					\
+		"netdev=eth0\0" 						\
+		"usbtty=cdc_acm\0" 						\
+		"serial#=fl-201508\0" 						\
+		// "bootargs=console=ttyS0,38400 root=/dev/nfs rw nfsroot=192.168.0.20:/export/rootfs ip=192.168.0.207:192.168.0.20:192.168.0.1:255.255.255.0:fl2440:eth0\0" \
+		""
 
 /*
  * Miscellaneous configurable options

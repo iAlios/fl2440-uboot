@@ -28,7 +28,7 @@
 
 /* we can't use the regular debug macros since the console might be
  * set to usbtty, which would cause deadlocks! */
-#define DEBUG
+#define DEBUG	USB_GADGET_DEBUG
 
 #ifdef	DEBUG
 #undef debug
@@ -459,7 +459,7 @@ void S3C24X0_udc_irq(void)
 	u_int32_t usb_status = inl(S3C24X0_UDC_USB_INT_REG);
 	u_int32_t usbd_status = inl(S3C24X0_UDC_EP_INT_REG);
 
-	//debug("< IRQ usbs=0x%02x, usbds=0x%02x start >", usb_status, usbd_status);
+	debug("< IRQ usbs=0x%02x, usbds=0x%02x start >", usb_status, usbd_status);
 
 	/* clear interrupts */
 	outl(usb_status, S3C24X0_UDC_USB_INT_REG);
