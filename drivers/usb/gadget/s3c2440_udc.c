@@ -25,6 +25,7 @@
 #include <config.h>
 
 #include <common.h>
+#include <asm/hardware.h>
 
 /* we can't use the regular debug macros since the console might be
  * set to usbtty, which would cause deadlocks! */

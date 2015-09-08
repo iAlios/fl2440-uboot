@@ -304,6 +304,8 @@ void start_armboot (void)
 		}
 	}
 
+	puts ("start invoke init_sequence list... ");
+
 	/* armboot_start is defined in the board-specific linker script */
 	mem_malloc_init (_armboot_start - CONFIG_SYS_MALLOC_LEN,
 			CONFIG_SYS_MALLOC_LEN);

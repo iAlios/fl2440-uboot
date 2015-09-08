@@ -809,6 +809,7 @@ static void usbtty_init_terminal_type(short type)
 static struct urb *next_urb (struct usb_device_instance *device,
 			     struct usb_endpoint_instance *endpoint)
 {
+	TTYDBG("==========next_urb=======before====\n");
 	struct urb *current_urb = NULL;
 	int space;
 
@@ -835,11 +836,13 @@ static struct urb *next_urb (struct usb_device_instance *device,
 		urb_append (&endpoint->tx, current_urb);
 		endpoint->tx_queue++;
 	}
+	TTYDBG("==========next_urb=======after====\n");
 	return current_urb;
 }
 
 static int write_buffer (circbuf_t * buf)
 {
+	TTYDBG("==========write_buffer=======before====\n");
 	if (!usbtty_configured ()) {
 		return 0;
 	}
@@ -905,6 +908,8 @@ static int write_buffer (circbuf_t * buf)
 		}/* end while */
 		return total;
 	}
+
+	TTYDBG("==========write_buffer=======after====\n");
 
 	return 0;
 }

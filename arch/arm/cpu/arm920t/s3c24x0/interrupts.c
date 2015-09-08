@@ -32,11 +32,61 @@
 #include <common.h>
 
 #include <asm/arch/s3c24x0_cpu.h>
+#include <asm/hardware.h>
+#include <asm/io.h>
 #include <asm/proc-armv/ptrace.h>
+
+static struct _irq_handler IRQ_HANDLER[N_IRQS];
+
+static void default_isr(void *data)
+{
+	struct s3c24x0_interrupt * const intregs = s3c24x0_get_base_interrupt();
+	printf("default_isr():  called for IRQ %d, Interrupt Status=%x PR=%x\n",
+	       (int)data, readl(intregs->SRCPND), readl(intregs->PRIORITY));
+}
+
+static int next_irq(void)
+{
+	struct s3c24x0_interrupt * const intregs = s3c24x0_get_base_interrupt();
+	return readl(&intregs->INTOFFSET);
+}
 
 void do_irq (struct pt_regs *pt_regs)
 {
-	struct s3c24x0_interrupt *irq = s3c24x0_get_base_interrupt();
-	u_int32_t intpnd = readl(&irq->INTPND);
+	int irq = next_irq();
 
+	IRQ_HANDLER[irq].m_func(IRQ_HANDLER[irq].m_data);
 }
+
+void irq_install_handler (int irq, interrupt_handler_t handle_irq, void *data)
+{
+	if (irq >= N_IRQS || !handle_irq)
+		return;
+
+	IRQ_HANDLER[irq].m_data = data;
+	IRQ_HANDLER[irq].m_func = handle_irq;
+}
+
+int arch_interrupt_init (void)
+{
+	int i;
+
+	/* install default interrupt handlers */
+	for (i = 0; i < N_IRQS; i++)
+		irq_install_handler(i, default_isr, (void *)i);
+	
+#if defined(CONFIG_FL2440_LED)
+	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
+	gpio->GPBDAT = ((1<<5) | (1<<6) | (1<<8) | (1<<10));
+	gpio->GPBDAT &= 0xffe;
+	gpio->GPBDAT = ~(1<<8);
+#endif
+
+	struct s3c24x0_interrupt * const intregs = s3c24x0_get_base_interrupt();
+
+	/* configure interrupts for IRQ mode */
+	intregs->INTMSK |= 0xFFFFFFFF;
+
+	return (0);
+}
+
