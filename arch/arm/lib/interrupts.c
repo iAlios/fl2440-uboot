@@ -36,6 +36,7 @@
  */
 
 #include <common.h>
+#include <asm/arch/s3c24x0_cpu.h>
 #include <asm/proc-armv/ptrace.h>
 
 #ifdef CONFIG_USE_IRQ
@@ -53,15 +54,28 @@ int interrupt_init (void)
 }
 
 /* enable IRQ interrupts */
+/* MRS R0, CPSR              ;复制CPSR 到R0 */
+/* BIC R0, R0, #0x1F         ;清零模式位*/
+/* ORR R0, R0, #new_mode     ;选择新的模式*/
+/* MSR CPSR, R0              ;写回到修改了的CPSR*/
+/* MSR CPSR_<flg>, #0xF0000000 ;不顾标志位的先前的状态将其都置位*/
+/*      <flg>    当目标只是简单地改变PSR 中条件码标志位时，可以在未干扰到控制位的情况下直接将值写入到标志位位中
+去。以下指令置位了N，Z，C 和V 标志位*/
 void enable_interrupts (void)
 {
-	unsigned long temp;
-	__asm__ __volatile__("mrs %0, cpsr\n"
-			     "bic %0, %0, #0x80\n"
-			     "msr cpsr_c, %0"
-			     : "=r" (temp)
-			     :
-			     : "memory");
+//	unsigned long temp;
+//	__asm__ __volatile__("mrs %0, cpsr\n"
+//			     "bic %0, %0, #0x80\n"
+//			     "msr cpsr_c, %0"
+//			     : "=r" (temp)
+//			     :
+//			     : "memory");
+
+	struct s3c24x0_interrupt * const intregs = s3c24x0_get_base_interrupt();
+
+	/* configure interrupts for IRQ mode */
+	intregs->INTMSK &= 0x00;
+
 }
 
 
@@ -71,14 +85,19 @@ void enable_interrupts (void)
  */
 int disable_interrupts (void)
 {
-	unsigned long old,temp;
-	__asm__ __volatile__("mrs %0, cpsr\n"
-			     "orr %1, %0, #0xc0\n"
-			     "msr cpsr_c, %1"
-			     : "=r" (old), "=r" (temp)
-			     :
-			     : "memory");
-	return (old & 0x80) == 0;
+//	unsigned long old,temp;
+//	__asm__ __volatile__("mrs %0, cpsr\n"
+//			     "orr %1, %0, #0xc0\n"
+//			     "msr cpsr_c, %1"
+//			     : "=r" (old), "=r" (temp)
+//			     :
+//			     : "memory");
+//	return (old & 0x80) == 0;
+	struct s3c24x0_interrupt * const intregs = s3c24x0_get_base_interrupt();
+
+	/* configure interrupts for IRQ mode */
+	intregs->INTMSK &= 0xFFFFFFFF;
+	return 0;
 }
 #else
 void enable_interrupts (void)
