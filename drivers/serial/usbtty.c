@@ -535,7 +535,7 @@ int drv_usbtty_init (void)
 	}
 	memcpy (serial_number, sn, snlen);
 	serial_number[snlen] = '\0';
-	TTYDBG("==========drv_usbtty_init=======serialN: %s\n", serial_number);
+	// TTYDBG("==========drv_usbtty_init=======serialN: %s\n", serial_number);
 
 	/* Decide on which type of UDC device to be.
 	 */
@@ -579,7 +579,7 @@ int drv_usbtty_init (void)
 static void usbtty_init_strings (void)
 {
 
-	TTYDBG("==========usbtty_init_strings=======before====\n");
+	// TTYDBG("==========usbtty_init_strings=======before====\n");
 	struct usb_string_descriptor *string;
 
 	usbtty_string_table[STR_LANG] =
@@ -628,12 +628,12 @@ static void usbtty_init_strings (void)
 	/* Now, initialize the string table for ep0 handling */
 	usb_strings = usbtty_string_table;
 	
-	TTYDBG("==========usbtty_init_strings=======after====\n");
+	// TTYDBG("==========usbtty_init_strings=======after====\n");
 }
 
 static void usbtty_init_instances (void)
 {
-	TTYDBG("==========usbtty_init_instances=======before====\n");
+	// TTYDBG("==========usbtty_init_instances=======before====\n");
 	int i;
 
 	/* initialize device instance */
@@ -720,19 +720,19 @@ static void usbtty_init_instances (void)
 				usbd_alloc_urb (device_instance,
 						&endpoint_instance[i]);
 	}
-	TTYDBG("==========usbtty_init_instances=======after====\n");
+	// TTYDBG("==========usbtty_init_instances=======after====\n");
 }
 
 static void usbtty_init_endpoints (void)
 {
-	TTYDBG("==========usbtty_init_endpoints=======before==== NUM_ENDPOINTS : %d\n", NUM_ENDPOINTS);
+	// TTYDBG("==========usbtty_init_endpoints=======before==== NUM_ENDPOINTS : %d\n", NUM_ENDPOINTS);
 	int i;
 
 	bus_instance->max_endpoints = NUM_ENDPOINTS + 1;
 	for (i = 1; i <= NUM_ENDPOINTS; i++) {
 		udc_setup_ep (device_instance, i, &endpoint_instance[i]);
 	}
-	TTYDBG("==========usbtty_init_endpoints=======after====\n");
+	// TTYDBG("==========usbtty_init_endpoints=======after====\n");
 }
 
 /* usbtty_init_terminal_type
@@ -741,7 +741,7 @@ static void usbtty_init_endpoints (void)
  */
 static void usbtty_init_terminal_type(short type)
 {
-	TTYDBG("==========usbtty_init_terminal_type=======before==== type: %d\n", type);
+	// TTYDBG("==========usbtty_init_terminal_type=======before==== type: %d\n", type);
 	switch(type){
 		/* CDC ACM */
 		case 0:
@@ -801,7 +801,7 @@ static void usbtty_init_terminal_type(short type)
 			interface_count = NUM_GSERIAL_INTERFACES;
 		break;
 	}
-	TTYDBG("==========usbtty_init_terminal_type=======after====\n");
+	// TTYDBG("==========usbtty_init_terminal_type=======after====\n");
 }
 
 /******************************************************************************/
@@ -809,7 +809,7 @@ static void usbtty_init_terminal_type(short type)
 static struct urb *next_urb (struct usb_device_instance *device,
 			     struct usb_endpoint_instance *endpoint)
 {
-	TTYDBG("==========next_urb=======before====\n");
+	// TTYDBG("==========next_urb=======before====\n");
 	struct urb *current_urb = NULL;
 	int space;
 
@@ -836,13 +836,13 @@ static struct urb *next_urb (struct usb_device_instance *device,
 		urb_append (&endpoint->tx, current_urb);
 		endpoint->tx_queue++;
 	}
-	TTYDBG("==========next_urb=======after====\n");
+	// TTYDBG("==========next_urb=======after====\n");
 	return current_urb;
 }
 
 static int write_buffer (circbuf_t * buf)
 {
-	TTYDBG("==========write_buffer=======before====\n");
+	// TTYDBG("==========write_buffer=======before====\n");
 	if (!usbtty_configured ()) {
 		return 0;
 	}
@@ -909,7 +909,7 @@ static int write_buffer (circbuf_t * buf)
 		return total;
 	}
 
-	TTYDBG("==========write_buffer=======after====\n");
+	// TTYDBG("==========write_buffer=======after====\n");
 
 	return 0;
 }
@@ -946,7 +946,7 @@ static int usbtty_configured (void)
 static void usbtty_event_handler (struct usb_device_instance *device,
 				  usb_device_event_t event, int data)
 {
-	TTYDBG("==========usbtty_event_handler=======before====\n");
+	// TTYDBG("==========usbtty_event_handler=======before====\n");
 	switch (event) {
 	case DEVICE_RESET:
 	case DEVICE_BUS_INACTIVE:
@@ -962,14 +962,14 @@ static void usbtty_event_handler (struct usb_device_instance *device,
 	default:
 		break;
 	}
-	TTYDBG("==========usbtty_event_handler=======after====\n");
+	// TTYDBG("==========usbtty_event_handler=======after====\n");
 }
 
 /******************************************************************************/
 
 int usbtty_cdc_setup(struct usb_device_request *request, struct urb *urb)
 {
-	TTYDBG("==========usbtty_cdc_setup=======before==== request:%d \n", request->bRequest);
+	// TTYDBG("==========usbtty_cdc_setup=======before==== request:%d \n", request->bRequest);
 	switch (request->bRequest){
 
 		case ACM_SET_CONTROL_LINE_STATE:	/* Implies DTE ready */
@@ -990,7 +990,7 @@ int usbtty_cdc_setup(struct usb_device_request *request, struct urb *urb)
 		default:
 			return 1;
 	}
-	TTYDBG("==========usbtty_cdc_setup=======after====\n");
+	// TTYDBG("==========usbtty_cdc_setup=======after====\n");
 	return 0;
 }
 
@@ -1003,7 +1003,7 @@ int usbtty_cdc_setup(struct usb_device_request *request, struct urb *urb)
  */
 void usbtty_poll (void)
 {
-	TTYDBG("==========usbtty_poll=======before====\n");
+	// TTYDBG("==========usbtty_poll=======before====\n");
 	/* New interrupts? */
 	udc_irq();
 
@@ -1026,6 +1026,6 @@ void usbtty_poll (void)
 
 	/* New interrupts? */
 	udc_irq();
-	TTYDBG("==========usbtty_poll=======after====\n");
+	// TTYDBG("==========usbtty_poll=======after====\n");
 
 }
