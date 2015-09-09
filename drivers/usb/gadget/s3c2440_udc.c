@@ -446,6 +446,7 @@ static void S3C24X0_udc_epn(int ep)
 /* this is just an empty wrapper for usbtty who assumes polling operation */
 void udc_irq(void)
 {
+	S3C24X0_udc_irq();
 }
 
 /* Handle general USB interrupts and dispatch according to type.
