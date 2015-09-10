@@ -137,7 +137,6 @@
 #undef MTDPARTS_DEFAULT
 #define MTDIDS_DEFAULT          "nand0=nandflash"
 #define MTDPARTS_DEFAULT        "mtdparts=nandflash:1m(uboot),"					\
-                                "256k(params),"  								\
                                 "1m(logo),"                                     \
                                 "5m(kernel),"                                   \
                                 "-(rootfs)"                      
