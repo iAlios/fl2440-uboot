@@ -42,18 +42,19 @@ static void default_isr(void *data)
 {
 	struct s3c24x0_interrupt * const intregs = s3c24x0_get_base_interrupt();
 	printf("default_isr():  called for IRQ %d, Interrupt Status=%x PR=%x\n",
-	       (int)data, readl(intregs->SRCPND), readl(intregs->PRIORITY));
+	       (int)data, intregs->SRCPND, intregs->PRIORITY);
 }
 
 static int next_irq(void)
 {
 	struct s3c24x0_interrupt * const intregs = s3c24x0_get_base_interrupt();
-	return readl(&intregs->INTOFFSET);
+	return (int) intregs->INTOFFSET;
 }
 
 void do_irq (struct pt_regs *pt_regs)
 {
 	int irq = next_irq();
+   	printf("do_irq():  called for IRQ %d\n", irq);
 
 	IRQ_HANDLER[irq].m_func(IRQ_HANDLER[irq].m_data);
 }
