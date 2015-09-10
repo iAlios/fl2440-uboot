@@ -53,6 +53,8 @@
 #include <asm/arch/s3c24x0_cpu.h>
 #include <asm/io.h>
 
+#include <asm/hardware.h>
+
 #ifdef CONFIG_BITBANGMII
 #include <miiphy.h>
 #endif
@@ -452,6 +454,7 @@ extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
 	reset_phy();
 #endif
 #endif
+	install_button_handler();
 
 #if defined(CONFIG_FL2440_LED)
         struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
@@ -466,6 +469,24 @@ extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
 	}
 
 	/* NOTREACHED - no way out of command loop except booting */
+}
+
+void button_handler(void *data)
+{
+	printf("####### button_handler clicked !!! ######" , (int) data);
+}
+
+void install_button_handler(void)
+{
+	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
+	// make gpio irq enable
+	gpio->GPFCON |= (0x10 << 0) | (0x10 << 2) | (0x10 << 3) | (0x10 << 4);
+
+	// register irq method
+	irq_install_handler(IRQ_EINT0, button_handler, BIT_EINT0);
+	irq_install_handler(IRQ_EINT2, button_handler, BIT_EINT2);
+	irq_install_handler(IRQ_EINT3, button_handler, BIT_EINT3);
+	irq_install_handler(IRQ_EINT4_7, button_handler, BIT_EINT4_7);
 }
 
 void hang (void)
