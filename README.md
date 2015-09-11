@@ -16,6 +16,7 @@ fl2440 uboot
         1.  USB Host 部分，读取 U 盘数据等
         2.  按钮中断控制 led 灯
         3.  download 脚本使用 oflash 下载 bin 文件
+        4.  auto_run.sh 自动编译并下载 u-boot.bin 文件
 
  编译方法
 ------------------------------
