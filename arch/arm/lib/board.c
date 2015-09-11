@@ -497,7 +497,7 @@ void install_button_handler(void)
 	// 设置下降沿出发终端，默认情况是 低电平触发，参见手册中断部分的内容 
 	gpio->EXTINT0 |= ((0x2 << 0) | (0x2 << 8) | (0x2 << 12) | (0x2 << 16));
 	// 外部中断4到7共用一个中断EINT4_7，将外部中断4对应的屏蔽位清除
-	gpio->EINTMASK &= ~(0x1 << 4);
+	gpio->EINTMASK &= ~(BIT_EINT4_7);
 
 	struct s3c24x0_interrupt * const intregs = s3c24x0_get_base_interrupt();
 	intregs->INTMSK &= (~(BIT_EINT0) & ~(BIT_EINT2) & ~(BIT_EINT3) & ~(BIT_EINT4_7));
