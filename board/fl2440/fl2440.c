@@ -106,29 +106,22 @@ int board_init(void) {
 
 	/* set up the I/O ports */
 	gpio->GPACON = 0x007FFFFF;
-
 #if defined(CONFIG_S3C2440)
 	gpio->GPBCON = 0x001dd7fc; //初始化相应的GPB 口为输出口,为显示LED作准备,之前忘了改导致灯不亮
-	// gpio->GPBCON = 0x00044555;
 #else
 	gpio->GPBCON = 0x00044555;
 #endif
-
 	gpio->GPBUP = 0x000007FF;
-	//gpio->GPCCON = 0xAAAAAAAA;
-	//gpio->GPCUP = 0x0000FFFF;
-	gpio->GPCUP = 0xFFFFFFFF; /*这个up和con放反了还有问题？字符显示出错，真奇怪*/
 	gpio->GPCCON = 0xAAAA56A9;
-
-	// gpio->GPCUP = 0xFFFFFFFF;
-	gpio->GPDUP = 0xFFFFFFFF;
+	gpio->GPCUP = 0xFFFFFFFF; 
 	gpio->GPDCON = 0xAAAAAAAA;
-	//gpio->GPDUP = 0x0000FFFF;
-
+	gpio->GPDUP = 0xFFFFFFFF;
 	gpio->GPECON = 0xAAAAAAAA;
 	gpio->GPEUP = 0x0000FFFF;
-	gpio->GPFCON = 0x000055AA;
+
+	gpio->GPFCON = 0x000056AA;
 	gpio->GPFUP = 0x000000FF;
+
 	gpio->GPGCON = 0xFF95FFBA;
 	gpio->GPGUP = 0x0000FFFF;
 	gpio->GPHCON = 0x002AFAAA;
@@ -150,7 +143,6 @@ int board_init(void) {
 	icache_enable();
 	dcache_enable();
 #if defined(CONFIG_FL2440_LED)
-	//gpio->GPBCON = 0x001dd7fc;//初始化相应的GPB 口为输出口,为显示LED作准备,之前忘了改导致灯不亮
 	gpio->GPBDAT = ((1<<5) | (1<<6) | (1<<8) | (1<<10));//使LED全部熄灭
 	gpio->GPBDAT &= 0xffe;// /*添加关闭蜂鸣器语句*/
 	gpio->GPBDAT = ~(3<<5);
