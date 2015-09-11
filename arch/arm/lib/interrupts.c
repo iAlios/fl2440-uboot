@@ -63,19 +63,13 @@ int interrupt_init (void)
 去。以下指令置位了N，Z，C 和V 标志位*/
 void enable_interrupts (void)
 {
-//	unsigned long temp;
-//	__asm__ __volatile__("mrs %0, cpsr\n"
-//			     "bic %0, %0, #0x80\n"
-//			     "msr cpsr_c, %0"
-//			     : "=r" (temp)
-//			     :
-//			     : "memory");
-
-	struct s3c24x0_interrupt * const intregs = s3c24x0_get_base_interrupt();
-
-	/* configure interrupts for IRQ mode */
-	intregs->INTMSK &= 0x00;
-
+	unsigned long temp;
+	__asm__ __volatile__("mrs %0, cpsr\n"
+			     "bic %0, %0, #0x80\n"
+			     "msr cpsr_c, %0"
+			     : "=r" (temp)
+			     :
+			     : "memory");
 }
 
 
@@ -85,19 +79,14 @@ void enable_interrupts (void)
  */
 int disable_interrupts (void)
 {
-//	unsigned long old,temp;
-//	__asm__ __volatile__("mrs %0, cpsr\n"
-//			     "orr %1, %0, #0xc0\n"
-//			     "msr cpsr_c, %1"
-//			     : "=r" (old), "=r" (temp)
-//			     :
-//			     : "memory");
-//	return (old & 0x80) == 0;
-	struct s3c24x0_interrupt * const intregs = s3c24x0_get_base_interrupt();
-
-	/* configure interrupts for IRQ mode */
-	intregs->INTMSK &= 0xFFFFFFFF;
-	return 0;
+	unsigned long old,temp;
+	__asm__ __volatile__("mrs %0, cpsr\n"
+			     "orr %1, %0, #0xc0\n"
+			     "msr cpsr_c, %1"
+			     : "=r" (old), "=r" (temp)
+			     :
+			     : "memory");
+	return (old & 0x80) == 0;
 }
 #else
 void enable_interrupts (void)

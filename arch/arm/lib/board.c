@@ -473,20 +473,38 @@ extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
 
 void button_handler(void *data)
 {
-	printf("####### button_handler clicked !!! ######" , (int) data);
+	//printf("####### button_handler clicked !!! ######" , (int) data);
+#if defined(CONFIG_FL2440_LED)
+        struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
+        gpio->GPBDAT = ~(((1<<5) | (1<<6) | (1<<8) | (1<<10)));
+		udelay(60*1000);
+        gpio->GPBDAT = ((1<<5) | (1<<6) | (1<<8) | (1<<10));
+#endif
+	if (((int) data) == IRQ_EINT4_7) 
+	{
+#if defined(CONFIG_FL2440_LED)
+		// clear irq
+		gpio->EINTPEND = BIT_EINT4_7;
+#endif
+	}
 }
 
 void install_button_handler(void)
 {
 	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
 	// make gpio irq enable
-	gpio->GPFCON |= (0x10 << 0) | (0x10 << 2) | (0x10 << 3) | (0x10 << 4);
+	gpio->GPFCON |= (0x2 << 0) | (0x2 << 4) | (0x2 << 6) | (0x2 << 8);
+	// trige condition
+	gpio->EXTINT0 |= ((0x2 << 0) | (0x2 << 8) | (0x2 << 12) | (0x2 << 16));
+
+	struct s3c24x0_interrupt * const intregs = s3c24x0_get_base_interrupt();
+	intregs->INTMSK &= (~(BIT_EINT0) & ~(BIT_EINT2) & ~(BIT_EINT3) & ~(BIT_EINT4_7));
 
 	// register irq method
-	irq_install_handler(IRQ_EINT0, button_handler, BIT_EINT0);
-	irq_install_handler(IRQ_EINT2, button_handler, BIT_EINT2);
-	irq_install_handler(IRQ_EINT3, button_handler, BIT_EINT3);
-	irq_install_handler(IRQ_EINT4_7, button_handler, BIT_EINT4_7);
+	irq_install_handler(IRQ_EINT0, button_handler, (void *) IRQ_EINT0);
+	irq_install_handler(IRQ_EINT2, button_handler, (void *) IRQ_EINT2);
+	irq_install_handler(IRQ_EINT3, button_handler, (void *) IRQ_EINT3);
+	irq_install_handler(IRQ_EINT4_7, button_handler, (void *) IRQ_EINT4_7);
 }
 
 void hang (void)

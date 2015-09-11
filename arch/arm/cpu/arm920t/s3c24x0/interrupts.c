@@ -51,9 +51,18 @@ static int next_irq(void)
 	return (int) intregs->INTOFFSET;
 }
 
+static void clear_pending(int irq_num)
+{
+	struct s3c24x0_interrupt * const intregs = s3c24x0_get_base_interrupt();
+	// clear SRCPND
+	intregs->SRCPND = 1 << irq_num;
+	intregs->INTPND = 1 << irq_num;
+}
+
 void do_irq (struct pt_regs *pt_regs)
 {
 	int irq = next_irq();
+	clear_pending(irq);
    	printf("do_irq():  called for IRQ %d\n", irq);
 
 	IRQ_HANDLER[irq].m_func(IRQ_HANDLER[irq].m_data);
@@ -86,6 +95,7 @@ int arch_interrupt_init (void)
 	struct s3c24x0_interrupt * const intregs = s3c24x0_get_base_interrupt();
 
 	/* configure interrupts for IRQ mode */
+	// disable all interrupts req
 	intregs->INTMSK |= 0xFFFFFFFF;
 
 	return (0);
