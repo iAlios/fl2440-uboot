@@ -119,6 +119,8 @@ int board_init(void) {
 	gpio->GPECON = 0xAAAAAAAA;
 	gpio->GPEUP = 0x0000FFFF;
 
+	// 将 GPF0~4 设为默认 EINT0~4 模式
+	// 注意 GPF4 为多中断共享，则需要多添加 EINTMASK 来辅助设置取消中断屏蔽
 	gpio->GPFCON = 0x000056AA;
 	gpio->GPFUP = 0x000000FF;
 
