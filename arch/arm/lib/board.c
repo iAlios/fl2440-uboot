@@ -473,7 +473,7 @@ extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
 
 void button_handler(void *data)
 {
-	//printf("####### button_handler clicked !!! ######" , (int) data);
+	printf("####### button_handler clicked !!! btn: %d ######\n" , (int) data);
 #if defined(CONFIG_FL2440_LED)
         struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
         gpio->GPBDAT = ~(((1<<5) | (1<<6) | (1<<8) | (1<<10)));
@@ -483,8 +483,8 @@ void button_handler(void *data)
 	if (((int) data) == IRQ_EINT4_7) 
 	{
 #if defined(CONFIG_FL2440_LED)
-		// clear irq
-		gpio->EINTPEND = BIT_EINT4_7;
+		// 清除中断数据
+		gpio->EINTPEND |= BIT_EINT4_7;
 #endif
 	}
 }
@@ -494,8 +494,10 @@ void install_button_handler(void)
 	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
 	// make gpio irq enable
 	gpio->GPFCON |= (0x2 << 0) | (0x2 << 4) | (0x2 << 6) | (0x2 << 8);
-	// trige condition
+	// 设置下降沿出发终端，默认情况是 低电平触发，参见手册中断部分的内容 
 	gpio->EXTINT0 |= ((0x2 << 0) | (0x2 << 8) | (0x2 << 12) | (0x2 << 16));
+	// 外部中断4到7共用一个中断EINT4_7，将外部中断4对应的屏蔽位清除
+	gpio->EINTMASK &= ~(0x1 << 4);
 
 	struct s3c24x0_interrupt * const intregs = s3c24x0_get_base_interrupt();
 	intregs->INTMSK &= (~(BIT_EINT0) & ~(BIT_EINT2) & ~(BIT_EINT3) & ~(BIT_EINT4_7));
