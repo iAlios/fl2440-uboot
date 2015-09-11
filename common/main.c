@@ -280,9 +280,9 @@ void main_loop (void)
 	int flag;
 #endif
 
-# ifdef CONFIG_CMD_MTDPARTS
-	run_command ("mtdparts default", 0);
-# endif	/* CONFIG_BOOT_RETRY_TIME */
+//# ifdef CONFIG_CMD_MTDPARTS
+//	run_command ("mtdparts default", 0);
+//# endif	/* CONFIG_BOOT_RETRY_TIME */
 
 #if defined(CONFIG_BOOTDELAY) && (CONFIG_BOOTDELAY >= 0)
 	char *s;

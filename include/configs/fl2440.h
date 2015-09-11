@@ -119,7 +119,7 @@
 #define CONFIG_BOOTCOMMAND	"nfs 0x30008000 192.168.1.2:/home/ilufei/nfs/zImage; bootm 0x30008000"
 #else
 #define CONFIG_BOOTARGS     "console=tty0 console=ttySAC0,115200 noinitrd root=/dev/mtdblock2 rootfstype=yaffs2"
-#define CONFIG_BOOTCOMMAND	"nand read 0x30008000 0x600000 0x210000; bootm 0x30008000"
+#define CONFIG_BOOTCOMMAND	"echo hello!!!!; run mtddaf"
 #endif
 
 #define CONFIG_ETHADDR		08:00:3e:26:0a:5b 
@@ -146,6 +146,7 @@
 		"netdev=eth0\0" 						\
 		"usbtty=cdc_acm\0" 						\
 		"serial#=fl-201508\0" 						\
+		"mtddaf=mtdparts default\0" 						\
 		// "bootargs=console=ttyS0,38400 root=/dev/nfs rw nfsroot=192.168.0.20:/export/rootfs ip=192.168.0.207:192.168.0.20:192.168.0.1:255.255.255.0:fl2440:eth0\0" \
 		""
 
@@ -276,6 +277,7 @@
 #define CONFIG_VIDEO               1
 #define CONFIG_CFB_CONSOLE       1
 #define CFG_CONSOLE_INFO_QUIET        //support display of console information at boot
+#define CONFIG_CMD_RUN
 
 #define LCD_VIDEO_ADDR          0x33b00000
 
