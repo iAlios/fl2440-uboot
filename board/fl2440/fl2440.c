@@ -112,7 +112,7 @@ int board_init(void) {
 	gpio->GPBCON = 0x00044555;
 #endif
 	gpio->GPBUP = 0x000007FF;
-	gpio->GPCCON = 0xAAAA56A9;
+	gpio->GPCCON = 0xAAAAAAAA;
 	gpio->GPCUP = 0xFFFFFFFF; 
 	gpio->GPDCON = 0xAAAAAAAA;
 	gpio->GPDUP = 0xFFFFFFFF;
