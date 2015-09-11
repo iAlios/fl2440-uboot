@@ -461,7 +461,7 @@ void S3C24X0_udc_irq(void)
 	u_int32_t usb_status = inl(S3C24X0_UDC_USB_INT_REG);
 	u_int32_t usbd_status = inl(S3C24X0_UDC_EP_INT_REG);
 
-	debug("< IRQ usbs=0x%02x, usbds=0x%02x start >", usb_status, usbd_status);
+	debug("< IRQ usbs=0x%02x, usbds=0x%02x start > \n", usb_status, usbd_status);
 
 	/* clear interrupts */
 	outl(usb_status, S3C24X0_UDC_USB_INT_REG);
@@ -522,7 +522,7 @@ int udc_endpoint_write (struct usb_endpoint_instance *endpoint)
 	unsigned short epnum =
 		endpoint->endpoint_address & USB_ENDPOINT_NUMBER_MASK;
 
-	debug("Entering for ep %x ", epnum);
+	debug("Entering for ep %x \n", epnum);
 
 	if (endpoint->tx_urb) {
 		u32 ep_csr1;
@@ -537,6 +537,17 @@ int udc_endpoint_write (struct usb_endpoint_instance *endpoint)
 	} else
 		debug("\n");
 	return 0;
+}
+
+void do_usbd_irq(void *data)
+{
+	printf("####### usbd_irq irq !!! the usbd irq : %d ######\n" , (int) data);
+	S3C24X0_udc_irq();
+}
+
+void do_dma2(void *data)
+{
+	printf("####### do_dma2 irq !!! the dma2 irq : %d ######\n" , (int) data);
 }
 
 /* Start to initialize h/w stuff */
@@ -563,7 +574,11 @@ int udc_init (void)
 	outl(0x00, S3C24X0_UDC_EP_INT_EN_REG);
 	outl(0x00, S3C24X0_UDC_USB_INT_EN_REG);
 
-	irq->INTMSK &= ~BIT_USBD;
+	irq->INTMSK &= ~BIT_DMA2;
+	irq->SRCPND &= ~BIT_DMA2;
+
+    irq_install_handler(IRQ_USBD, do_usbd_irq, (void *) IRQ_USBD);
+    irq_install_handler(IRQ_DMA2, do_dma2, (void *) IRQ_DMA2);
 
 	return 0;
 }
@@ -642,6 +657,7 @@ void udc_connect (void)
 	gpio->GPGDAT |= S3C24X0_MISCCR_USBSUSPND1;
 
 	irq->INTMSK &= ~BIT_USBD;
+	irq->SRCPND &= ~BIT_USBD;
 }
 
 /* Turn off the USB connection by disabling the pullup resistor */
