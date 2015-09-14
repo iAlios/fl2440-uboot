@@ -42,6 +42,13 @@ fl2440 uboot
 
   即可编译了。
 
+当然如果嫌麻烦，提供 auto_run.sh 脚本来自动化操作，可以直接通过运行：
+    
+    $ chmod a+x auto_run.sh
+    $ ./auto_run.sh rnew build
+    
+如上就能自动运行 make clean, make config, make等编译命令，同时还会执行 oflash 进行下载操作。
+
 注意：目前可以支持 jffs2 文件系统
 
 部分宏定义说明
