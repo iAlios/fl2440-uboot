@@ -124,8 +124,8 @@
 
 #define CONFIG_ETHADDR		08:00:3e:26:0a:5b 
 #define CONFIG_NETMASK		255.255.255.0
-#define CONFIG_IPADDR		192.168.1.4
-#define CONFIG_SERVERIP		192.168.1.1
+#define CONFIG_IPADDR		192.168.1.234
+#define CONFIG_SERVERIP		192.168.1.101
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	115200		/* speed to run kgdb serial port */
@@ -137,7 +137,6 @@
 #undef MTDPARTS_DEFAULT
 #define MTDIDS_DEFAULT          "nand0=nandflash"
 #define MTDPARTS_DEFAULT        "mtdparts=nandflash:1m(uboot),"					\
-                                "1m(logo),"                                     \
                                 "5m(kernel),"                                   \
                                 "-(rootfs)"                      
                                 
@@ -246,12 +245,13 @@
 #define CONFIG_JFFS2_CMDLINE       1    /*when you not use nand legancy*/
 #define CONFIG_JFFS2_NAND          1
 #define CONFIG_JFFS2_DEV           "nand0"
-#define CONFIG_JFFS2_PART_SIZE     0x4c0000
-#define CONFIG_JFFS2_PART_OFFSET   0x40000
+#define CONFIG_JFFS2_PART_SIZE     0x0fa00000
+#define CONFIG_JFFS2_PART_OFFSET   0x00600000
 /*JFFS2 support*/
 
 /*USB Device*/
 #define CONFIG_USB_DEVICE
+// #define CONFIG_USB_DEVICE_WITH_DMA
 #define CONFIG_USB_TTY
 /*USB Device*/
 
