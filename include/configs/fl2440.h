@@ -112,6 +112,7 @@
 #define CONFIG_CMD_MTDPARTS
 #define CONFIG_MTD_DEVICE 
 #define CONFIG_MTD_PARTITIONS
+#define CMD_NAND_YAFFS
 #endif
 
 #ifdef BOOT_NFS
