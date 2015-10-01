@@ -6,6 +6,12 @@
 #ifndef __ASM_ARCH_HARDWARE_H
 #define __ASM_ARCH_HARDWARE_H
 
+/* the gpio config */
+#define GPIO_IN    				(0x0)
+#define GPIO_OUT    			(0x1)
+#define GPIO_EINT	    		(0x2)
+#define GPIO_OTHER    			(0x3)
+
 /* PENDING BIT */
 #define BIT_EINT0		(0x1)
 #define BIT_EINT1		(0x1<<1)
@@ -72,6 +78,13 @@
 #define IRQ_ADC			(31)
 
 #define N_IRQS         (32)
+
+/* the condition of triggering the irq */
+#define IRQ_LOW_TRG    				(0x0)
+#define IRQ_HIGH_TRG    			(0x1)
+#define IRQ_DOWN_EDGE_TRG    		(0x2)
+#define IRQ_UP_EDGE_TRG    			(0x4)
+#define IRQ_BOTH_EDGE_TRG    		(0x8)
 
 /* MISCCR */
 #define S3C24X0_MISCCR_USBDEV	    (0<<3)

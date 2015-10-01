@@ -493,9 +493,9 @@ void install_button_handler(void)
 {
 	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
 	// make gpio irq enable
-	gpio->GPFCON |= (0x2 << 0) | (0x2 << 4) | (0x2 << 6) | (0x2 << 8);
+	gpio->GPFCON |= (GPIO_EINT << 0) | (GPIO_EINT << 4) | (GPIO_EINT << 6) | (GPIO_EINT << 8);
 	// 设置下降沿出发终端，默认情况是 低电平触发，参见手册中断部分的内容 
-	gpio->EXTINT0 |= ((0x2 << 0) | (0x2 << 8) | (0x2 << 12) | (0x2 << 16));
+	gpio->EXTINT0 |= ((IRQ_DOWN_EDGE_TRG << 0) | (IRQ_DOWN_EDGE_TRG << 8) | (IRQ_DOWN_EDGE_TRG << 12) | (IRQ_DOWN_EDGE_TRG << 16));
 	// 外部中断4到7共用一个中断EINT4_7，将外部中断4对应的屏蔽位清除
 	gpio->EINTMASK &= ~(BIT_EINT4_7);
 
