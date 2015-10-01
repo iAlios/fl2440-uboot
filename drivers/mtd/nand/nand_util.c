@@ -477,7 +477,7 @@ int nand_write_skip_bad(nand_info_t *nand, loff_t offset, size_t *length,
 	size_t len_incl_bad;
 	u_char *p_buffer = buffer;
 
-#if defined(CMD_NAND_YAFFS)
+#if defined(CONFIG_CMD_NAND_YAFFS)
 
 	if(nand->rw_oob == 1) {
 		size_t oobsize = nand->oobsize;
@@ -508,7 +508,7 @@ int nand_write_skip_bad(nand_info_t *nand, loff_t offset, size_t *length,
 		printf ("Attempt to write outside the flash area\n");
 		return -EINVAL;
 	}
-#ifndef CMD_NAND_YAFFS
+#ifndef CONFIG_CMD_NAND_YAFFS
 	if (len_incl_bad == *length) {
 		rval = nand_write (nand, offset, length, buffer);
 		if (rval != 0)
@@ -531,7 +531,7 @@ int nand_write_skip_bad(nand_info_t *nand, loff_t offset, size_t *length,
 			offset += nand->erasesize - block_offset;
 			continue;
 		}
-#if defined (CMD_NAND_YAFFS)
+#if defined (CONFIG_CMD_NAND_YAFFS)
 		if (nand->skipfirstblk == 1) {
 			nand->skipfirstblk = 0;
 			printf("skip the first good block %llx\n",
@@ -555,7 +555,7 @@ int nand_write_skip_bad(nand_info_t *nand, loff_t offset, size_t *length,
 
 		left_to_write -= write_size;
 		offset        += write_size;
-#if defined (CMD_NAND_YAFFS)
+#if defined (CONFIG_CMD_NAND_YAFFS)
 		if (nand->rw_oob == 1) {
 			p_buffer += write_size + (write_size/nand->writesize*nand->oobsize);
 		} else {

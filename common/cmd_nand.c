@@ -487,20 +487,20 @@ int do_nand(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 			else
 				ret = nand_write_skip_bad(nand, off, &size,
 							  (u_char *)addr);
-#if defined(CMD_NAND_YAFFS)
+#if defined(CONFIG_CMD_NAND_YAFFS)
                 } else if (s != NULL && (!strcmp(s, ".yaffs")||!strcmp(s, ".yaffs1"))) {
                      if (read) {
                               printf("nand read.yaffs[1] is not provide temporarily");
                       } else {
                               nand->rw_oob = 1;
-#if defined(CMD_NAND_YAFFS_SKIPFB)
+#if defined(CONFIG_CMD_NAND_YAFFS_SKIPFB)
                               nand->skipfirstblk = 1;
 #else
                               nand->skipfirstblk = 0;             
 #endif
                               ret = nand_write_skip_bad(nand, off, &size,
 							  (u_char *)addr);
-#if defined(CMD_NAND_YAFFS_SKIPFB)
+#if defined(CONFIG_CMD_NAND_YAFFS_SKIPFB)
                               nand->skipfirstblk = 0;
 #endif
 
@@ -615,7 +615,7 @@ U_BOOT_CMD(
 	"    to/from memory address 'addr', skipping bad blocks.\n"
 	"nand erase [clean] [off size] - erase 'size' bytes from\n"
 	"    offset 'off' (entire device if not specified)\n"
-#if defined(CMD_NAND_YAFFS)
+#if defined(CONFIG_CMD_NAND_YAFFS)
         "nand read[.yaffs[1]] is not provide temporarily!\n"
         "nand write[.yaffs[1]]    addr off size - write the `size' byte yaffs image starting\n"
         "     at offset `off' from memory address `addr' (.yaffs1 for 512+16 NAND)\n"

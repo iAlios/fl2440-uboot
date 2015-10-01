@@ -2098,7 +2098,7 @@ static int nand_write(struct mtd_info *mtd, loff_t to, size_t len,
 {
 	struct nand_chip *chip = mtd->priv;
 	int ret;
-#if defined(CMD_NAND_YAFFS)
+#if defined(CONFIG_CMD_NAND_YAFFS)
         int oldopsmode = 0;
         if (mtd->rw_oob == 1) {
 	    size_t oobsize = mtd->oobsize;
@@ -2129,7 +2129,7 @@ static int nand_write(struct mtd_info *mtd, loff_t to, size_t len,
 	chip->ops.len = len;
 	chip->ops.datbuf = (uint8_t *)buf;
 	//chip->ops.oobbuf = NULL;
-#if defined(CMD_NAND_YAFFS)
+#if defined(CONFIG_CMD_NAND_YAFFS)
 
 	if(mtd->rw_oob != 1) {
 		chip->ops.oobbuf = NULL;
@@ -2148,7 +2148,7 @@ static int nand_write(struct mtd_info *mtd, loff_t to, size_t len,
 
 	nand_release_device(mtd);
 
-#if defined(CMD_NAND_YAFFS)
+#if defined(CONFIG_CMD_NAND_YAFFS)
 	chip->ops.mode = oldopsmode;
 #endif
 

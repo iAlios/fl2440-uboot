@@ -128,7 +128,7 @@ struct mtd_info {
 	 * 1 or larger.
 	 */
 	u_int32_t writesize;
-#if defined (CMD_NAND_YAFFS)
+#if defined (CONFIG_CMD_NAND_YAFFS)
         u_char rw_oob;
         u_char skipfirstblk;
        
