@@ -106,8 +106,13 @@
 #define CONFIG_CMD_JFFS2
 #define CONFIG_CMD_USB
 #define CONFIG_CMD_FAT
+#define CONFIG_SUPPORT_YAFFS
+/*YAFFS support*/
+#ifdef CONFIG_SUPPORT_YAFFS
 #define CONFIG_CMD_NAND_YAFFS				1
 #define CONFIG_CMD_NAND_YAFFS_SKIPFB		1
+#endif
+/*YAFFS support*/
 // #define CONFIG_CMD_FASTBOOT
 
 #if defined(CONFIG_FL2440)
