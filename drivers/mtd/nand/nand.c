@@ -20,7 +20,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-#define DEBUG 		0
+#ifdef CONFIG_NAND_DEBUG
+#define DEBUG 		CONFIG_NAND_DEBUG_LEVEL
+#endif
 #include <common.h>
 #include <nand.h>
 

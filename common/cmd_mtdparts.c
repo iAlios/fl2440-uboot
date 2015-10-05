@@ -83,8 +83,9 @@
  * mtdparts=mtdparts=edb7312-nor:256k(ARMboot)ro,-(root);edb7312-nand:-(home)
  *
  */
-
-#define DEBUG    0
+#ifdef CONFIG_NAND_DEBUG
+#define DEBUG 		 CONFIG_NAND_DEBUG_LEVEL
+#endif
 
 #include <common.h>
 #include <command.h>

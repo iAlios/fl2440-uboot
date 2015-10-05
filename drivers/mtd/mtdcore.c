@@ -6,7 +6,10 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-#define DEBUG		0
+#ifdef CONFIG_NAND_DEBUG
+#define DEBUG 		CONFIG_NAND_DEBUG_LEVEL
+#endif
+
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/compat.h>
 #include <ubi_uboot.h>

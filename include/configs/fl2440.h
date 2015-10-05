@@ -306,9 +306,17 @@
 #define CONFIG_CMDLINE_TAG          1      
 
 #define CONFIG_BOOTDELAY	5
-#if DEBUG
+#ifdef CONFIG_DEBUG_ENABLE
+
+#ifdef CONFIG_MTD_DEBUG_ENABLE
 #define CONFIG_MTD_DEBUG  1
 #define CONFIG_MTD_DEBUG_VERBOSE  0
+#endif
+
+#ifdef CONFIG_NAND_DEBUG_ENABLE
+#define CONFIG_NAND_DEBUG
+#define CONFIG_NAND_DEBUG_LEVEL		1
+#endif
 // #define DEBUG_CFB_CONSOLE   1
 #endif
 
