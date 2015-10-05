@@ -17,6 +17,7 @@ fl2440 uboot
         2.  按钮中断控制 led 灯
         3.  download 脚本使用 oflash 下载 bin 文件
         4.  auto_run.sh 自动编译并下载 u-boot.bin 文件
+        5.  添加 yaffs 支持
 
  编译方法
 ------------------------------
