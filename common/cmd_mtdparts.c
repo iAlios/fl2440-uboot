@@ -84,6 +84,8 @@
  *
  */
 
+#define DEBUG    0
+
 #include <common.h>
 #include <command.h>
 #include <malloc.h>
@@ -693,6 +695,7 @@ int mtd_device_validate(u8 type, u8 num, u32 *size)
 	char mtd_dev[16];
 
 	sprintf(mtd_dev, "%s%d", MTD_DEV_TYPE(type), num);
+	debug("===mtd_device_validate=== mtd_dev: %s\n", mtd_dev);
 	mtd = get_mtd_device_nm(mtd_dev);
 	if (IS_ERR(mtd)) {
 		printf("Device %s not found!\n", mtd_dev);
@@ -1378,6 +1381,7 @@ static int parse_mtdparts(const char *const mtdparts)
 
 	/* re-read 'mtdparts' variable, mtd_devices_init may be updating env */
 	p = getenv("mtdparts");
+	debug(" re-read 'mtdparts' variablemtdparts = %s\n\n", p);
 
 	if (strncmp(p, "mtdparts=", 9) != 0) {
 		printf("mtdparts variable doesn't start with 'mtdparts='\n");
@@ -1605,7 +1609,7 @@ int mtdparts_init(void)
 		/* ok it's good, save new ids */
 		strncpy(last_ids, ids, MTDIDS_MAXLEN);
 	}
-
+	
 	/* parse partitions if either mtdparts or mtdids were updated */
 	if (parts && ((last_parts[0] == '\0') || ((strcmp(last_parts, parts) != 0)) || ids_changed)) {
 		if (parse_mtdparts(parts) != 0)

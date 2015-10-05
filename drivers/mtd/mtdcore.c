@@ -6,7 +6,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-
+#define DEBUG		0
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/compat.h>
 #include <ubi_uboot.h>
@@ -18,8 +18,8 @@ int add_mtd_device(struct mtd_info *mtd)
 {
 	int i;
 
+	debug("add_mtd_device: mtd->name: %s\n", mtd->name);
 	BUG_ON(mtd->writesize == 0);
-
 	for (i = 0; i < MAX_MTD_DEVICES; i++)
 		if (!mtd_table[i]) {
 			mtd_table[i] = mtd;
@@ -124,6 +124,8 @@ struct mtd_info *get_mtd_device_nm(const char *name)
 	struct mtd_info *mtd = NULL;
 
 	for (i = 0; i < MAX_MTD_DEVICES; i++) {
+		if(mtd_table[i])
+		    debug("===get_mtd_device_nm= the index: %d== mtd_dev: %s\n", i, mtd_table[i]->name);
 		if (mtd_table[i] && !strcmp(name, mtd_table[i]->name)) {
 			mtd = mtd_table[i];
 			break;

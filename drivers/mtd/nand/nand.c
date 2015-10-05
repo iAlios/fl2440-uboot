@@ -20,7 +20,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-
+#define DEBUG 		0
 #include <common.h>
 #include <nand.h>
 
@@ -66,6 +66,7 @@ static void nand_init_chip(struct mtd_info *mtd, struct nand_chip *nand,
 			 */
 			sprintf(dev_name[i], "nand%d", i);
 			mtd->name = dev_name[i++];
+			debug("==== add new device ==== name is %s\n", mtd->name);
 			add_mtd_device(mtd);
 #endif
 		} else
