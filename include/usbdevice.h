@@ -37,7 +37,7 @@
 
 #define MAX_URBS_QUEUED 5
 
-#define USB_GADGET_DEBUG 1
+#define USB_GADGET_DEBUG 3
 
 #if USB_GADGET_DEBUG 
 #define usberr(fmt,args...) serial_printf("ERROR: %s(), %d: "fmt"\n",__FUNCTION__,__LINE__,##args)
