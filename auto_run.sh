@@ -14,10 +14,17 @@ fi
 
 case $1 in
 	rnew) echo "start clean files, remake uboot, then download it into nand flash....."
+	rm -rf $2
 	make O=$2 clean
 	make O=$2 fl2440_config
 	make O=$2
-	./download.sh $2/u-boot.bin
+	if [ $? -eq 0 ]
+	then
+		./download.sh $2/u-boot.bin
+	else
+		echo "=============== build error =============="
+		exit 1
+	fi
 	;;
 	download) echo "download file into nand flash...."
 	./download.sh $2
