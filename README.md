@@ -72,18 +72,18 @@ CONFIG_SYS_CONSOLE_IS_IN_ENV       如果不定义，只能在 LCD 上显示，�
     scanning bus for storage devices... 1 Storage Device(s) found
 
     fl2440 > usb storage
-    Device 0: Vendor: USB 2.0  Rev: 5.00 Prod: Flash Drive
-    Type: Removable Hard Disk
-    Capacity: 1012.5 MB = 0.9 GB (2073600 x 512)
+    Device 0: Vendor: SanDisk  Rev: 1.20 Prod: Cruzer Switch
+        Type: Removable Hard Disk
+        Capacity: 7633.5 MB = 7.4 GB (15633408 x 512)
 
     fl2440 > usb part 0
-    print_part of 0
     Partition Map for USB device 0  --   Partition Type: DOS
+    
     Partition     Start Sector     Num Sectors     Type
-    1                   32         2073568       b
+        4                   63        15633345       c
 
-    fl2440 > fatload usb 0:1 0x30008000 uImage_T35
-    reading uImage_T35
+    fl2440 > fatload usb 0:4 0x30008000 uImage
+    reading uImage
     ................................................................................
     ................................................................................
     .....................................
