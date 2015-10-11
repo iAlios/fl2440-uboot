@@ -1,0 +1,6 @@
+FL2440 BOARD
+M:	i.lufei <m.lufei@qq.com>
+S:	Maintained
+F:	board/samsung/fl2440/
+F:	include/configs/fl2440.h
+F:	configs/fl2440_defconfig
