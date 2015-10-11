@@ -16,8 +16,8 @@ case $1 in
 	rnew) echo "start clean files, remake uboot, then download it into nand flash....."
 	rm -rf $2
 	make O=$2 clean
-	make O=$2 fl2440_config
-	make O=$2
+	make CROSS_COMPILE=arm-linux- ARCH=arm O=$2 fl2440_config
+	make CROSS_COMPILE=arm-linux- ARCH=arm O=$2 all
 	if [ $? -eq 0 ]
 	then
 		./download.sh $2/u-boot.bin
