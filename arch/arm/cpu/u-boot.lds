@@ -14,7 +14,7 @@ OUTPUT_ARCH(arm)
 ENTRY(_start)
 SECTIONS
 {
-	. = 0x00000000;
+	. = CONFIG_SYS_TEXT_BASE;
 
 	. = ALIGN(4);
 	.text :
@@ -22,6 +22,9 @@ SECTIONS
 		*(.__image_copy_start)
 		*(.vectors)
 		CPUDIR/start.o (.text*)
+#ifdef CONFIG_FL2440
+               board/samsung/fl2440/built-in.o (.text*)
+#endif
 		*(.text*)
 	}
 

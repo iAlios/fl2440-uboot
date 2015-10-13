@@ -20,8 +20,9 @@
 #define CONFIG_S3C24X0		/* This is a SAMSUNG S3C24x0-type SoC */
 #define CONFIG_S3C2410		/* specifically a SAMSUNG S3C2410 SoC */
 #define CONFIG_SMDK2440		/* on a SAMSUNG FL2440 Board */
+#define CONFIG_FL2440		/* on a SAMSUNG FL2440 Board */
 
-#define CONFIG_SYS_TEXT_BASE	0x0
+#define CONFIG_SYS_TEXT_BASE	0x30000000
 
 #define CONFIG_SYS_GENERIC_BOARD
 
@@ -34,6 +35,7 @@
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
 
+#define CONFIG_SKIP_LOWLEVEL_INIT
 /*
  * Hardware drivers
  */
@@ -190,9 +192,7 @@
 
 /* additions for new relocation code, must be added to all boards */
 #define CONFIG_SYS_SDRAM_BASE	PHYS_SDRAM_1
-#define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_SYS_SDRAM_BASE + 0x1000 - \
-				GENERATED_GBL_DATA_SIZE)
-
+#define CONFIG_SYS_INIT_SP_ADDR	(PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)
 #define CONFIG_BOARD_EARLY_INIT_F
 
 #endif /* __CONFIG_H */
