@@ -14,7 +14,7 @@ OUTPUT_ARCH(arm)
 ENTRY(_start)
 SECTIONS
 {
-	. = CONFIG_SYS_TEXT_BASE;
+	. = 0x00000000;
 
 	. = ALIGN(4);
 	.text :
