@@ -18,31 +18,44 @@
  * (easy to change)
  */
 #define CONFIG_S3C24X0		/* This is a SAMSUNG S3C24x0-type SoC */
-#define CONFIG_S3C2410		/* specifically a SAMSUNG S3C2410 SoC */
+#define CONFIG_S3C2440		/* specifically a SAMSUNG S3C2440 SoC */
 #define CONFIG_SMDK2440		/* on a SAMSUNG FL2440 Board */
-#define CONFIG_FL2440		/* on a SAMSUNG FL2440 Board */
 
-#define CONFIG_SYS_TEXT_BASE	0x30000000
+#define CONFIG_SYS_TEXT_BASE	0x30008000
 
+#define CONFIG_SPL_TEXT_BASE		0x0
+#define CONFIG_SPL_MAX_SIZE		0x1000
+#define CONFIG_SPL_STACK		0x1000
+
+#define CONFIG_UBOOT_MTD_ADDR           0x100000
+#define CONFIG_UBOOT_LENGTH             0x100000
+
+#define CONFIG_BOOTCOMMAND				\
+	"nand read 0x30008000 0x200000 0x400000;"		\
+	"bootm 0x30008000;"
+
+#define CONFIG_BOOTARGS  "noinitrd root=/dev/mtdblock2 init=/linuxrc console=ttySAC0,115200n8"
+
+#define CONFIG_OF_LIBFDT	1
 #define CONFIG_SYS_GENERIC_BOARD
 
 #define CONFIG_SYS_ARM_CACHE_WRITETHROUGH
 
-/* input clock of PLL (the SMDK2410 has 12MHz input clock) */
+/* input clock of PLL (the FL2440 has 12MHz input clock) */
 #define CONFIG_SYS_CLK_FREQ	12000000
 
 #define CONFIG_CMDLINE_TAG	/* enable passing of ATAGs */
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
 
-#define CONFIG_SKIP_LOWLEVEL_INIT
+#define CONFIG_SKIP_LOWLEVEL_INIT	1
 /*
  * Hardware drivers
  */
 #define CONFIG_DRIVER_DM9000             1
 #define CONFIG_DM9000_USE_16BIT          1
-#define CONFIG_DM9000_BASE               0x20000300
-#define DM9000_IO                        CONFIG_DM9000_BASE 
+#define CONFIG_DM9000_BASE		0x20000000
+#define DM9000_IO			CONFIG_DM9000_BASE
 #define DM9000_DATA                      (CONFIG_DM9000_BASE + 4)
 #define CONFIG_DM9000_NO_SROM            1 //防止dm9000去从srom中读取物理地址信息
 #define CONFIG_NET_MULTI                 1
@@ -101,8 +114,9 @@
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
 #define CONFIG_NETMASK		255.255.255.0
-#define CONFIG_IPADDR		10.0.0.110
-#define CONFIG_SERVERIP		10.0.0.1
+#define CONFIG_IPADDR		192.168.1.6
+#define CONFIG_SERVERIP		192.168.1.8
+#define CONFIG_ETHADDR          00:0c:29:2a:5c:a5
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	115200	/* speed to run kgdb serial port */
@@ -112,6 +126,8 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
+#define CONFIG_AUTO_COMPLETE
+#define CONFIG_SYS_PROMPT	"FL2440 # "
 #define CONFIG_SYS_CBSIZE	256
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE	(CONFIG_SYS_CBSIZE + \
@@ -149,12 +165,12 @@
 #define CONFIG_SYS_FLASH_CFI
 #define CONFIG_FLASH_CFI_DRIVER
 #define CONFIG_FLASH_CFI_LEGACY
-#define CONFIG_SYS_FLASH_LEGACY_512Kx16
+#define CONFIG_SYS_FLASH_LEGACY_1024Kx16
 #define CONFIG_FLASH_SHOW_PROGRESS	45
 
 #define CONFIG_SYS_MAX_FLASH_BANKS	1
 #define CONFIG_SYS_FLASH_BANKS_LIST     { CONFIG_SYS_FLASH_BASE }
-#define CONFIG_SYS_MAX_FLASH_SECT	(19)
+#define CONFIG_SYS_MAX_FLASH_SECT	(35)
 
 #define CONFIG_ENV_ADDR			(CONFIG_SYS_FLASH_BASE + 0x070000)
 #define CONFIG_ENV_IS_IN_FLASH
@@ -175,10 +191,17 @@
  * NAND configuration
  */
 #ifdef CONFIG_CMD_NAND
-#define CONFIG_NAND_S3C2410
-#define CONFIG_SYS_S3C2410_NAND_HWECC
+#define CONFIG_NAND_S3C2440
+#define CONFIG_SYS_S3C2440_NAND_HWECC
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		0x4E000000
+#endif
+
+/*#define CONFIG_S3C2440_NAND_HWECC*/
+
+#ifdef CONFIG_S3C2440_NAND_HWECC
+#define CONFIG_SYS_NAND_ECCSIZE 2048
+#define CONFIG_SYS_NAND_ECCBYTES 4
 #endif
 
 /*
@@ -196,7 +219,9 @@
 
 /* additions for new relocation code, must be added to all boards */
 #define CONFIG_SYS_SDRAM_BASE	PHYS_SDRAM_1
-#define CONFIG_SYS_INIT_SP_ADDR	(PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)
+#define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_SYS_SDRAM_BASE + 0x1000 - \
+				GENERATED_GBL_DATA_SIZE)
+
 #define CONFIG_BOARD_EARLY_INIT_F
 
 #endif /* __CONFIG_H */

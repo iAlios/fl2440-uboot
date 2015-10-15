@@ -23,9 +23,9 @@ DECLARE_GLOBAL_DATA_PTR;
 #define M_MDIV	0xC3
 #define M_PDIV	0x4
 #define M_SDIV	0x1
-#elif FCLK_SPEED==1		/* Fout = 405MHZ */
-#define M_MDIV	0x7F
-#define M_PDIV	0x2
+#elif FCLK_SPEED==1		/* Fout = 202.8MHz */
+#define M_MDIV	0xA1
+#define M_PDIV	0x3
 #define M_SDIV	0x1
 #endif
 
@@ -36,8 +36,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #define U_M_PDIV	0x3
 #define U_M_SDIV	0x1
 #elif USB_CLOCK==1
-#define U_M_MDIV	0x38
-#define U_M_PDIV	0x2
+#define U_M_MDIV	0x48
+#define U_M_PDIV	0x3
 #define U_M_SDIV	0x2
 #endif
 
@@ -57,7 +57,7 @@ int board_early_init_f(void)
 	struct s3c24x0_clock_power * const clk_power =
 					s3c24x0_get_base_clock_power();
 	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
-
+	writel(0x5, &clk_power->clkdivn);
 	/* to reduce PLL lock time, adjust the LOCKTIME register */
 	writel(0xFFFFFF, &clk_power->locktime);
 
@@ -80,12 +80,12 @@ int board_early_init_f(void)
 	writel(0x001dd7fc, &gpio->gpbcon);
 	writel(0x000007FF, &gpio->gpbup);
 	writel(0xAAAAAAAA, &gpio->gpccon);
-	writel(0x0000FFFF, &gpio->gpcup);
+	writel(0xFFFFFFFF, &gpio->gpcup);
 	writel(0xAAAAAAAA, &gpio->gpdcon);
-	writel(0x0000FFFF, &gpio->gpdup);
+	writel(0xFFFFFFFF, &gpio->gpdup);
 	writel(0xAAAAAAAA, &gpio->gpecon);
 	writel(0x0000FFFF, &gpio->gpeup);
-	writel(0x000055AA, &gpio->gpfcon);
+	writel(0x000056AA, &gpio->gpfcon);
 	writel(0x000000FF, &gpio->gpfup);
 	writel(0xFF95FFBA, &gpio->gpgcon);
 	writel(0x0000FFFF, &gpio->gpgup);

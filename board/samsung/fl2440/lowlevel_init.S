@@ -33,11 +33,11 @@
 #define WAIT			(0x1<<2)
 #define UBLB			(0x1<<3)
 
-#define B1_BWSCON		(DW16)
+#define B1_BWSCON		(DW32)
 #define B2_BWSCON		(DW16)
-#define B3_BWSCON		(DW16)
+#define B3_BWSCON		(DW16 + WAIT + UBLB)
 #define B4_BWSCON		(DW16)
-#define B5_BWSCON		(DW8)
+#define B5_BWSCON		(DW16)
 #define B6_BWSCON		(DW32)
 #define B7_BWSCON		(DW32)
 
@@ -68,11 +68,11 @@
 #define B2_PMC			0x0
 
 #define B3_Tacs			0x0	/*  0clk */
-#define B3_Tcos			0x0	/*  4clk */
+#define B3_Tcos			0x3	/*  4clk */
 #define B3_Tacc			0x7	/* 14clk */
-#define B3_Tcoh			0x0	/*  1clk */
+#define B3_Tcoh			0x1	/*  1clk */
 #define B3_Tah			0x0	/*  0clk */
-#define B3_Tacp			0x0     /*  6clk */
+#define B3_Tacp			0x3     /*  6clk */
 #define B3_PMC			0x0	/* normal */
 
 #define B4_Tacs			0x0	/*  0clk */
@@ -102,9 +102,10 @@
 /* REFRESH parameter */
 #define REFEN			0x1	/* Refresh enable */
 #define TREFMD			0x0	/* CBR(CAS before RAS)/Auto refresh */
-#define Trp			0x2	/* 2clk */
-#define Trc			0x3	/* 3clk */
-#define REFCNT			1020	/* period=15.6us, HCLK=60Mhz, (2048+1-15.6*60) */
+#define Trp			0x0	/* 2clk */
+#define Trc			0x3	/* 7clk */
+#define Tchr			0x2	/* 3clk */
+#define REFCNT			0x4f4	/* period=15.6us, HCLK=100Mhz, (2048+1-15.6*100) */
 /**************************************/
 
 .globl lowlevel_init
@@ -139,7 +140,7 @@ SMRDATA:
     .word ((B5_Tacs<<13)+(B5_Tcos<<11)+(B5_Tacc<<8)+(B5_Tcoh<<6)+(B5_Tah<<4)+(B5_Tacp<<2)+(B5_PMC))
     .word ((B6_MT<<15)+(B6_Trcd<<2)+(B6_SCAN))
     .word ((B7_MT<<15)+(B7_Trcd<<2)+(B7_SCAN))
-    .word ((REFEN<<23)+(TREFMD<<22)+(Trp<<20)+(Trc<<18)+REFCNT)
-    .word 0x31
+    .word ((REFEN<<23)+(TREFMD<<22)+(Trp<<20)+(Trc<<18)+(Tchr<<16)+REFCNT)
+    .word 0x32
     .word 0x30
     .word 0x30

@@ -6,3 +6,4 @@
 
 obj-y	:= fl2440.o
 obj-y	+= lowlevel_init.o
+obj-$(CONFIG_SPL_BUILD) += nand_read_ll.o
