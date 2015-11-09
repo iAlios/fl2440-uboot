@@ -20,6 +20,7 @@
 #define CONFIG_S3C24X0		/* This is a SAMSUNG S3C24x0-type SoC */
 #define CONFIG_S3C2440		/* specifically a SAMSUNG S3C2440 SoC */
 #define CONFIG_SMDK2440		/* on a SAMSUNG FL2440 Board */
+#define CONFIG_FL2440		/* on a SAMSUNG FL2440 Board */
 
 #define CONFIG_SYS_TEXT_BASE	0x30008000
 
